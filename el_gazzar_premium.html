@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EL GAZZAR | Ultimate Educational Platform</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], arabic: ['Cairo', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: { brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 800: '#3730a3', 900: '#312e81', 950: '#1e1b4b' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Compressed Utilities to save tokens */
+        body { -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.05); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .nav-active { color: #4f46e5 !important; background-color: #eef2ff !important; }
+        .dark .nav-active { color: #818cf8 !important; background-color: rgba(99,102,241,0.15) !important; }
+        
+        /* Quiz & Global Classes */
+        .opt-btn.selected { border-color: #4f46e5; background-color: rgba(99,102,241,0.05); }
+        .opt-btn.correct { border-color: #10b981; background-color: rgba(16,185,129,0.1); }
+        .opt-btn.wrong { border-color: #ef4444; background-color: rgba(239,68,68,0.1); }
+        .en-text { font-family: 'Inter', sans-serif; direction: ltr; text-align: left; }
+        
+        /* Crash Course Minified Classes */
+        .cc-box { border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; background: #fff; margin-bottom: 1rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+        .dark .cc-box { border-color: #334155; background: #1e293b; }
+        .cc-btn { width: 100%; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; transition: background-color 0.3s; font-weight: 700; font-size: 1.125rem; text-align: left; }
+        .dark .cc-btn { background: #0f172a; color: #fff; }
+        .cc-btn:hover { background: #f1f5f9; }
+        .dark .cc-btn:hover { background: #1e293b; }
+        .cc-content { padding: 1.5rem; display: none; }
+        .cc-head { font-weight: 700; font-size: 1.125rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 0.75rem; color: #2563eb; }
+        .dark .cc-head { border-color: #334155; color: #60a5fa; }
+        .vocab-list { font-size: 0.875rem; line-height: 1.8; color: #475569; }
+        .dark .vocab-list { color: #cbd5e1; }
+
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Certificate */
+        .cert-container { background: url('https://www.transparenttextures.com/patterns/cubes.png'), linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 10px solid #cbd5e1; padding: 40px; position: relative; color: white; }
+        .cert-container::before { content: ''; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; border: 2px dashed #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 flex h-screen overflow-hidden antialiased">
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full glass z-40 border-t border-slate-200 dark:border-slate-800 flex justify-around p-2">
+        <button onclick="app.navigate('dashboard')" class="nav-item nav-active flex flex-col items-center p-2 rounded-xl text-slate-500 w-full"><i class="fa-solid fa-house mb-1"></i><span class="text-[10px]">Home</span></button>
+        <button onclick="app.navigate('vocab')" class="nav-item flex flex-col items-center p-2 rounded-xl text-slate-500 w-full"><i class="fa-solid fa-book-open mb-1"></i><span class="text-[10px]">Vocab</span></button>
+        <button onclick="app.navigate('crashcourse')" class="nav-item flex flex-col items-center p-2 rounded-xl text-slate-500 w-full"><i class="fa-solid fa-bolt mb-1"></i><span class="text-[10px]">Crash</span></button>
+        <button onclick="app.navigate('unitquizzes')" class="nav-item flex flex-col items-center p-2 rounded-xl text-slate-500 w-full"><i class="fa-solid fa-graduation-cap mb-1"></i><span class="text-[10px]">Exams</span></button>
+        <button onclick="app.navigate('profile')" class="nav-item flex flex-col items-center p-2 rounded-xl text-slate-500 w-full"><i class="fa-solid fa-user mb-1"></i><span class="text-[10px]">Profile</span></button>
+    </nav>
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden md:flex flex-col w-64 glass border-r border-slate-200 dark:border-slate-800 z-40 h-full">
+        <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
+            <div class="w-10 h-10 bg-brand-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-lg">EG</div>
+            <div>
+                <h1 class="font-extrabold text-lg text-slate-900 dark:text-white leading-tight">El Gazzar</h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Education</p>
+            </div>
+        </div>
+        <div class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto hide-scrollbar">
+            <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Learn</p>
+            <button onclick="app.navigate('dashboard')" class="nav-item nav-active w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-house w-5"></i> Dashboard</button>
+            <button onclick="app.navigate('vocab')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-book-open w-5"></i> Vocab Bank</button>
+            <button onclick="app.navigate('crashcourse')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-bolt w-5"></i> Crash Course</button>
+            <button onclick="app.navigate('grammarhub')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-pen-nib w-5"></i> Grammar Hub</button>
+            <button onclick="app.navigate('funmode')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-cube w-5"></i> 3D Fun Mode</button>
+            
+            <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-6">Assessments</p>
+            <button onclick="app.navigate('mechquizzes')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-robot w-5"></i> Mechatronics Quizzes</button>
+            <button onclick="app.navigate('unitquizzes')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-file-contract w-5"></i> Unit Exams</button>
+            
+            <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-6">System</p>
+            <button onclick="app.navigate('profile')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-user w-5"></i> Profile & Stats</button>
+            <button onclick="app.navigate('admin')" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-lock w-5"></i> Admin Portal</button>
+        </div>
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+            <button onclick="app.toggleTheme()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"><i class="fa-solid fa-moon w-5" id="theme-icon"></i> Theme</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 h-full overflow-y-auto pb-20 md:pb-0" id="main-scroll">
+        <header class="md:hidden glass sticky top-0 z-30 px-4 h-16 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2"><div class="w-8 h-8 bg-brand-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">EG</div><h1 class="font-bold text-slate-900 dark:text-white">El Gazzar</h1></div>
+            <button onclick="app.toggleTheme()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300"><i class="fa-solid fa-moon" id="theme-icon-mobile"></i></button>
+        </header>
+
+        <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
+            
+            <!-- VIEW: LOGIN -->
+            <section id="view-login" class="hidden min-h-[80vh] flex items-center justify-center">
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl w-full max-w-md text-center border border-slate-200 dark:border-slate-800">
+                    <div class="w-16 h-16 bg-brand-600 text-white rounded-2xl flex items-center justify-center font-bold text-3xl mx-auto mb-6">EG</div>
+                    <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">Technical English Platform</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Enter your full name to start learning.</p>
+                    <form onsubmit="app.login(event)" class="space-y-4 text-left">
+                        <input type="text" id="loginName" required placeholder="e.g. Moslim Ibrahim" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500 outline-none text-slate-900 dark:text-white">
+                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all">Enter Platform</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- VIEW: DASHBOARD -->
+            <section id="view-dashboard" class="hidden space-y-8">
+                <div class="bg-gradient-to-r from-brand-600 to-brand-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
+                    <h2 class="text-3xl font-extrabold mb-2">Welcome, <span id="dash-name">Student</span>!</h2>
+                    <p class="text-brand-100 text-sm mb-6 max-w-lg">Master technical vocabulary, crash courses, grammar rules, and complete all assessments.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="app.navigate('unitquizzes')" class="bg-white text-brand-700 px-6 py-2.5 rounded-xl font-bold text-sm shadow-md">Unit Exams</button>
+                        <button onclick="app.navigate('mechquizzes')" class="bg-white/20 hover:bg-white/30 px-6 py-2.5 rounded-xl font-bold text-sm transition-all backdrop-blur">Mechatronics Quizzes</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 card-hover">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-book"></i></div>
+                        <div><p class="text-2xl font-black" id="stat-vocab">0</p><p class="text-[10px] font-bold text-slate-500 uppercase">Words Learned</p></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 card-hover">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-robot"></i></div>
+                        <div><p class="text-2xl font-black" id="stat-mech">0</p><p class="text-[10px] font-bold text-slate-500 uppercase">Mech Quizzes</p></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 card-hover">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-contract"></i></div>
+                        <div><p class="text-2xl font-black" id="stat-unit">0</p><p class="text-[10px] font-bold text-slate-500 uppercase">Unit Exams</p></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 card-hover">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-star"></i></div>
+                        <div><p class="text-2xl font-black" id="stat-score">0%</p><p class="text-[10px] font-bold text-slate-500 uppercase">Avg Score</p></div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row gap-6 items-center shadow-sm">
+                    <div class="w-16 h-16 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 border-2 border-brand-200"><i class="fa-solid fa-graduation-cap text-2xl"></i></div>
+                    <div class="flex-1 text-center md:text-left">
+                        <h4 class="text-[10px] font-bold text-brand-600 uppercase mb-1">Instructor</h4>
+                        <h3 class="text-lg font-bold">Dr. Reham El-Gazzar</h3>
+                        <p class="text-xs text-slate-500 mt-1">Technical English & Professional Communication. Designed by Moslim Ibrahim.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: VOCABULARY -->
+            <section id="view-vocab" class="hidden space-y-6">
+                <div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Vocabulary Bank (160 Words)</h2></div>
+                <input type="text" id="vocabSearch" onkeyup="app.renderVocab()" placeholder="Search vocab..." class="w-full p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none">
+                <div id="vocab-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            </section>
+
+            <!-- VIEW: CRASH COURSE -->
+            <section id="view-crashcourse" class="hidden space-y-6">
+                <div class="mb-4"><h2 class="text-2xl font-bold">Foundational Crash Course</h2><p class="text-sm text-slate-500">Comprehensive review & sentence building.</p></div>
+                <div id="crash-course-container"></div>
+            </section>
+
+            <!-- VIEW: GRAMMAR HUB -->
+            <section id="view-grammarhub" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Grammar Hub</h2>
+                    <select id="grammarSelect" onchange="app.renderGrammarTab(this.value)" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"></select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="col-span-1 space-y-2" id="grammar-tabs">
+                        <button onclick="app.setGrammarTab('summary')" class="w-full p-3 bg-brand-600 text-white rounded-xl text-sm font-bold text-left">Summary</button>
+                        <button onclick="app.setGrammarTab('grammar')" class="w-full p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-bold text-left border border-slate-200 dark:border-slate-700">Grammar</button>
+                        <button onclick="app.setGrammarTab('notes')" class="w-full p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-bold text-left border border-slate-200 dark:border-slate-700">Notes</button>
+                        <button onclick="app.setGrammarTab('mistakes')" class="w-full p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-bold text-left border border-slate-200 dark:border-slate-700">Mistakes</button>
+                        <button onclick="app.setGrammarTab('review')" class="w-full p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-bold text-left border border-slate-200 dark:border-slate-700">Review</button>
+                    </div>
+                    <div class="col-span-3 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 min-h-[300px]" id="grammar-content"></div>
+                </div>
+            </section>
+
+            <!-- VIEW: MECHATRONICS QUIZZES LIST -->
+            <section id="view-mechquizzes" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold">Mechatronics Quizzes (179 Questions)</h2>
+                <div id="mech-quiz-list" class="grid grid-cols-1 gap-4"></div>
+            </section>
+
+            <!-- VIEW: UNIT EXAMS LIST -->
+            <section id="view-unitquizzes" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold">Unit Exams (160 Questions)</h2>
+                <div id="unit-quiz-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <!-- VIEW: EXAM ENGINE (Used for both Mech & Unit) -->
+            <section id="view-exam" class="hidden space-y-6">
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl flex justify-between items-center border border-slate-200 dark:border-slate-800 sticky top-2 z-30 shadow-sm">
+                    <div>
+                        <h3 id="exam-title" class="font-bold">Exam</h3>
+                        <p class="text-xs text-brand-600 font-bold"><span id="exam-curr">1</span> / <span id="exam-tot">10</span></p>
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <span id="anti-cheat" class="hidden text-red-500 text-xs font-bold animate-pulse">⚠️ Tab Switched!</span>
+                        <div class="bg-red-50 dark:bg-red-900/20 text-red-600 px-3 py-1.5 rounded-lg font-mono font-bold" id="exam-timer">10:00</div>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full"><div id="exam-prog" class="bg-brand-500 h-full w-0 transition-all"></div></div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-1 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 h-fit" id="exam-grid-container">
+                        <div class="grid grid-cols-5 gap-2" id="exam-map"></div>
+                    </div>
+                    <div class="lg:col-span-3 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div id="exam-question-area" class="space-y-6"></div>
+                        <div class="flex justify-between mt-8">
+                            <button onclick="app.examEngine.prev()" class="px-6 py-2 bg-slate-200 dark:bg-slate-800 rounded-lg font-bold">Prev</button>
+                            <button onclick="app.examEngine.next()" class="px-6 py-2 bg-brand-600 text-white rounded-lg font-bold" id="exam-next-btn">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: RESULTS -->
+            <section id="view-results" class="hidden flex items-center justify-center min-h-[70vh]">
+                <div class="bg-white dark:bg-slate-900 p-10 rounded-3xl shadow-xl text-center max-w-lg w-full border border-slate-200 dark:border-slate-800 relative">
+                    <div id="confetti" class="absolute inset-0 pointer-events-none"></div>
+                    <div id="res-badge" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl font-black mb-4 border-4"></div>
+                    <h2 class="text-2xl font-bold mb-1">Assessment Complete</h2>
+                    <p id="res-name" class="text-slate-500 mb-6">Quiz Name</p>
+                    <div class="flex justify-around bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-6">
+                        <div><p class="text-[10px] text-slate-500 uppercase font-bold">Score</p><p id="res-score" class="text-2xl font-black">0/0</p></div>
+                        <div><p class="text-[10px] text-slate-500 uppercase font-bold">Percent</p><p id="res-perc" class="text-2xl font-black text-brand-600">0%</p></div>
+                    </div>
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="app.navigate('dashboard')" class="px-6 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold">Dashboard</button>
+                        <button onclick="app.showCertificate()" class="px-6 py-2 bg-amber-500 text-white rounded-xl font-bold shadow-lg" id="cert-btn">Certificate</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: FUN MODE 3D -->
+            <section id="view-funmode" class="hidden h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">3D Fun Mode</h2>
+                    <button onclick="app.navigate('dashboard')" class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="flex-1 relative bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+                    <div id="canvas-3d" class="absolute inset-0 z-0"></div>
+                    <div class="relative z-20 mt-auto p-8 w-full max-w-2xl mx-auto text-center bg-gradient-to-t from-slate-950 to-transparent">
+                        <span id="fm-cat" class="px-3 py-1 bg-white/10 text-white text-[10px] font-bold uppercase rounded-full mb-4 inline-block">Cat</span>
+                        <h3 id="fm-word" class="text-5xl font-black text-white mb-2 drop-shadow-md">Word</h3>
+                        <p id="fm-def" class="text-lg text-slate-300 mb-2">Def</p>
+                        <p id="fm-ar" class="text-xl text-brand-400 font-arabic font-bold mb-6" dir="rtl">Ar</p>
+                        <div class="flex justify-center items-center gap-6">
+                            <button onclick="app.fun.prev()" class="w-12 h-12 rounded-full bg-white/20 text-white text-xl"><i class="fa-solid fa-arrow-left"></i></button>
+                            <span class="text-white font-mono"><span id="fm-curr">1</span>/<span id="fm-tot">160</span></span>
+                            <button onclick="app.fun.next()" class="w-12 h-12 rounded-full bg-white/20 text-white text-xl"><i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: PROFILE -->
+            <section id="view-profile" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold">Profile</h2>
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl text-center border border-slate-200 dark:border-slate-800">
+                    <div class="w-24 h-24 bg-brand-600 text-white rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-4" id="p-avatar"></div>
+                    <h3 class="text-2xl font-bold mb-1" id="p-name">Name</h3>
+                    <button onclick="app.logout()" class="mt-4 px-6 py-2 bg-red-100 text-red-600 rounded-xl font-bold text-sm">Logout</button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="badges-grid"></div>
+            </section>
+
+            <!-- VIEW: ADMIN -->
+            <section id="view-admin" class="hidden space-y-6">
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl max-w-md mx-auto text-center border border-slate-200 dark:border-slate-800" id="admin-login">
+                    <h2 class="text-xl font-bold mb-4">Admin Portal</h2>
+                    <input type="password" id="admin-pwd" placeholder="Password (******)" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border mb-4 text-center">
+                    <button onclick="app.admin.login()" class="w-full py-3 bg-brand-600 text-white rounded-xl font-bold">Enter</button>
+                </div>
+                <div id="admin-panel" class="hidden space-y-6">
+                    <div class="flex justify-between"><h2 class="text-2xl font-bold">Students Database</h2><button onclick="app.admin.export()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold">Export CSV</button></div>
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl overflow-x-auto border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left text-sm"><thead class="bg-slate-100 dark:bg-slate-800"><tr><th class="p-4">Name</th><th class="p-4">Joined</th><th class="p-4">Quizzes Taken</th><th class="p-4">Vocab Learned</th></tr></thead><tbody id="admin-table"></tbody></table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white max-w-3xl w-full rounded-2xl overflow-hidden relative">
+            <button onclick="document.getElementById('cert-modal').classList.replace('flex','hidden')" class="absolute top-4 right-4 text-slate-800 text-2xl z-10"><i class="fa-solid fa-xmark"></i></button>
+            <div class="cert-container text-center">
+                <i class="fa-solid fa-award text-7xl text-amber-500 mb-4"></i>
+                <h1 class="text-4xl font-extrabold mb-2" style="font-family:'Cairo'">شهادة اجتياز</h1>
+                <div class="w-24 h-1 bg-amber-500 mx-auto mb-6"></div>
+                <p class="text-lg mb-2 text-slate-300">يُشهد بأن المهندس</p>
+                <h2 id="c-name" class="text-3xl font-bold text-sky-400 mb-4">Name</h2>
+                <p class="text-lg text-slate-300 mb-2">قد اجتاز بنجاح</p>
+                <h3 id="c-quiz" class="text-xl font-bold mb-6 en-text text-center text-white">Quiz</h3>
+                <p class="text-2xl font-black text-emerald-400 mb-8" id="c-score">100%</p>
+                <div class="flex justify-between text-sm text-slate-400 px-10">
+                    <div><p class="font-bold text-white">Dr. Reham Elgazzar</p><p>Instructor</p></div>
+                    <div><p class="font-bold text-white">Moslim Ibrahim</p><p>Developer</p></div>
+                </div>
+            </div>
+            <button onclick="window.print()" class="w-full py-4 bg-brand-600 text-white font-bold">Print PDF</button>
+        </div>
+    </div>
+    <div id="toast-container"></div>
+
+    <script>
+        // === COMPRESSED DATA STRUCTURES ===
+        // Vocab: [Lesson, [[word, def, ex, ar, hint], ...]]
+        const rawVcb = [
+            ["Lesson 1: Control Flow",[["If Statement","Runs code only when a condition is true.","Ex","ينفذ الكود فقط عندما يكون الشرط صحيحاً.","Like a gatekeeper"],["Else Statement","Runs code when the if condition is false.","Ex","ينفذ الكود عندما يكون شرط if خاطئاً.","Plan B"],["For Loop","Repeats code a set number of times.","Ex","يكرر الكود عدداً محدداً من المرات.","You know exact times"],["While Loop","Repeats code as long as a condition is true.","Ex","يكرر الكود طالما أن الشرط صحيح.","Keep eating while hungry"],["Do-While Loop","Runs code once, then repeats if true.","Ex","ينفذ الكود مرة واحدة على الأقل.","Do first, ask later"],["Condition","A true/false check.","Ex","فحص (صح/خطأ).","Crossroad"],["Comparison Operator","Symbols like ==, <, >.","Ex","رموز مقارنة.","Math symbols"],["Logical Operator","Symbols like &&, ||, !.","Ex","رموز منطقية.","Connectors"],["Nested Loop","A loop inside another loop.","Ex","حلقة بداخل حلقة.","Matryoshka dolls"],["Break Statement","Stops a loop immediately.","Ex","يوقف الحلقة فوراً.","Emergency brake"],["Continue Statement","Skips the rest of the loop.","Ex","يتخطى باقي الكود.","Skip turn"],["Switch Statement","Chooses one action from many.","Ex","يختار إجراءً واحداً.","Train switch"],["Case Statement","One option inside a switch.","Ex","خيار بداخل switch.","Specific door"],["Default Case","What happens if no case matches.","Ex","الخيار الافتراضي.","Fallback plan"],["Increment Operator (++)","Adds 1 to a variable.","Ex","يضيف 1.","Step Up"],["Decrement Operator (--)","Subtracts 1.","Ex","يطرح 1.","Step Down"],["Boolean Expression","A statement that is true/false.","Ex","تعبير صح/خطأ.","Yes/No question"],["Conditional Operator (?:)","Shortcut for if/else.","Ex","اختصار لجملة if/else.","Condition ? T : F"],["Control Flow","The order instructions run.","Ex","ترتيب تنفيذ التعليمات.","Path of water"],["Infinite Loop","A loop that never stops.","Ex","حلقة لا تتوقف.","Hamster wheel"]]],
+            ["Lesson 2: Digital I/O",[["Digital Input","Signal read as HIGH or LOW.","Ex","إشارة كـ HIGH أو LOW.","Switch On/Off"],["Digital Output","Signal set to HIGH or LOW.","Ex","مخرج كـ HIGH أو LOW.","Command On/Off"],["pinMode","Tells if pin is INPUT or OUTPUT.","Ex","يحدد نوع الطرف.","Job title for pin"],["digitalRead","Reads input pin.","Ex","يقرأ الطرف.","Listening"],["digitalWrite","Sets output pin.","Ex","يضبط الطرف.","Flipping switch"],["HIGH","The ON state.","Ex","حالة التشغيل.","Full power"],["LOW","The OFF state.","Ex","حالة الإيقاف.","No power"],["Pull-up Resistor","Keeps pin HIGH until pulled LOW.","Ex","مقاومة رفع.","Spring pulling door"],["Pull-down Resistor","Keeps pin LOW until pulled HIGH.","Ex","مقاومة خفض.","Gravity holding door"],["Debouncing","Fixing button bounce.","Ex","معالجة الارتداد.","Ignoring shaking"],["Interrupt","Stops Arduino to run special code.","Ex","مقاطعة.","Shouting STOP"],["Edge Triggered","Reacting to signal change.","Ex","تفاعل مع تغير الإشارة.","Reacting to moment"],["Bit Manipulation","Changing individual bits.","Ex","تغيير البتات.","Flipping tiny switches"],["Active High","HIGH means active.","Ex","HIGH تعني نشط.","Power = Action"],["Active Low","LOW means active.","Ex","LOW تعني نشط.","Ground = Action"],["Port Register","Direct memory access.","Ex","وصول مباشر للذاكرة.","Master switch"],["Shift Register","Expands outputs.","Ex","مسجل إزاحة.","Sending train of data"],["Button Matrix","Grid of buttons.","Ex","شبكة أزرار.","Keyboard grid"],["Multiplexing","Sharing pins.","Ex","مشاركة الأطراف.","Taking turns"],["Signal Conditioning","Preparing signal.","Ex","تجهيز الإشارة.","Taming wild signal"]]],
+            ["Lesson 3: Analog Input",[["Analog Input","Reads varying voltage levels.","Ex","دخل تناظري.","Dimmer switch"],["AnalogRead","Reads analog pin (0-1023).","Ex","قراءة تناظرية.","Asking chip"],["ADC","Analog-to-Digital Converter.","Ex","محول تناظري رقمي.","Translator"],["Resolution","How fine measurement is.","Ex","دقة القياس.","Megapixels"],["Range","Min and max values.","Ex","النطاق.","Lowest and highest"],["Mapping","Converting range.","Ex","تحويل النطاق.","Stretching tape"],["Calibration","Adjusting to standard.","Ex","معايرة.","Setting scale"],["Sensor Value","Raw number from sensor.","Ex","قيمة المستشعر.","Raw data"],["Voltage Range","Voltage limits.","Ex","نطاق الجهد.","Safe zone"],["Reference Voltage","Voltage for comparison.","Ex","الجهد المرجعي.","Ruler"],["Sampling Rate","How often measurement is taken.","Ex","معدل أخذ العينات.","Pictures per second"],["Noise Filtering","Smoothing random changes.","Ex","تصفية التشويش.","Noise-canceling"],["Analog Multiplexer","Shares analog pin.","Ex","مجمع تناظري.","Traffic cop"],["Input Impedance","Resistance to input.","Ex","مقاومة الدخل.","How heavy meter is"],["Quantization Error","Error from conversion.","Ex","خطأ التحويل.","Rounding error"],["Sample and Hold","Freezing voltage for ADC.","Ex","أخذ العينة والاحتفاظ.","Flash photograph"],["Analog Smoothing","Averaging readings.","Ex","تنعيم القراءات.","Smooth curve"],["Voltage Divider","Resistors to lower voltage.","Ex","مقسم جهد.","Step-down stairs"],["Linearity","Straight relationship.","Ex","الخطية.","Straight line"],["Potentiometer","Variable resistor knob.","Ex","مقاومة متغيرة.","Volume knob"]]],
+            ["Lesson 4: Serial Communication",[["Serial Communication","Sending data one bit at a time.","Ex","اتصال تسلسلي.","Single file door"],["Serial Monitor","Window showing data.","Ex","مراقب تسلسلي.","Chat window"],["Baud Rate","Speed of communication.","Ex","سرعة الاتصال.","Speed limit"],["Transmit (TX)","Sending data out.","Ex","إرسال.","Talking"],["Receive (RX)","Receiving data.","Ex","استقبال.","Listening"],["Serial.begin()","Starts serial.","Ex","بدء الاتصال.","Picking up phone"],["Serial.print()","Sends text.","Ex","طباعة نص.","Typing message"],["Serial.println()","Sends text with newline.","Ex","طباعة مع سطر جديد.","Typing + Enter"],["ASCII","Character code.","Ex","كود الحروف.","Secret alphabet"],["Byte","8 bits of data.","Ex","بايت.","Small package"],["Character","Single letter/symbol.","Ex","حرف.","Keystroke"],["Serial Buffer","Temporary memory.","Ex","ذاكرة مؤقتة.","Waiting room"],["Handshaking","Coordinating data sending.","Ex","مصافحة بيانات.","Agreeing to talk"],["Parity","Error checking bit.","Ex","بت فحص الأخطاء.","Checksum"],["Stop Bit","Marks end of character.","Ex","بت النهاية.","Period"],["Data Frame","Complete bit package.","Ex","إطار البيانات.","Envelope"],["Serial.available()","Checks buffer bytes.","Ex","التحقق من الذاكرة.","Checking mailbox"],["Serial.read()","Reads one byte.","Ex","قراءة بايت.","Opening letter"],["Serial.flush()","Waits for outgoing data.","Ex","انتظار الإرسال.","Waiting for postman"],["Serial Protocol","Rules for messages.","Ex","بروتوكول تسلسلي.","Grammar rules"]]],
+            ["Lesson 5: Interfacing with Sensors",[["Interface","Connection point.","Ex","واجهة توصيل.","Bridge"],["Interfacing","Connecting and communicating.","Ex","عملية التوصيل.","Making devices talk"],["Calibration","Adjusting to true values.","Ex","معايرة.","Setting watch"],["Offset","Constant value added.","Ex","إزاحة ثابتة.","Permanent shift"],["Scaling","Multiplying reading.","Ex","تغيير المقياس.","Converting miles"],["Linearization","Correcting curved response.","Ex","تصحيح المنحنى.","Ironing wrinkled line"],["Sensor Library","Pre-written code.","Ex","مكتبة المستشعر.","Ready manual"],["Datasheet","Technical document.","Ex","وثيقة فنية.","Rulebook"],["Accuracy","Closeness to true value.","Ex","الدقة.","Bullseye"],["Precision","Consistency of readings.","Ex","الإحكام.","Hitting same spot"],["Noise","Random changes.","Ex","تشويش.","Static"],["Filtering","Removing noise.","Ex","تصفية.","Sieve"],["Thermistor","Temperature resistor.","Ex","مقاومة حرارية.","Heat resistor"],["Photodiode","Light to current.","Ex","صمام ضوئي.","Tiny solar panel"],["I2C","2-wire serial protocol.","Ex","بروتوكول I2C.","2-wire bus"],["SPI","Fast 3-4 wire protocol.","Ex","بروتوكول SPI.","Fast highway"],["Analog Sensor","Continuous voltage output.","Ex","مستشعر تناظري.","Smooth scale"],["Digital Sensor","Digital data output.","Ex","مستشعر رقمي.","1s and 0s"],["Sampling Interval","Time between readings.","Ex","فاصل العينات.","Pause between ticks"],["Sensor Fusion","Combining sensor data.","Ex","دمج المستشعرات.","Eyes and ears"]]],
+            ["Lesson 6: Interfacing with Actuators",[["Motor Driver","Circuit for motor power.","Ex","مشغل محرك.","Muscle amplifier"],["H-Bridge","Circuit for direction control.","Ex","جسر H.","Reversing electricity"],["PWM","Pulse Width Modulation.","Ex","تعديل النبضة.","Flicking fast"],["Speed Control","Adjusting spin speed.","Ex","التحكم بالسرعة.","Gas pedal"],["Direction Control","Choosing forward/reverse.","Ex","التحكم بالاتجاه.","Gear shift"],["Servo Control","Positioning servo.","Ex","تحكم السيرفو.","Pointing arm"],["Stepper Control","Energizing coils for steps.","Ex","تحكم الخطوة.","Tick by tick"],["Gear Ratio","Motor to output turns.","Ex","نسبة التروس.","Small to big gears"],["Feedback","Info about state.","Ex","تغذية راجعة.","Mirror"],["Encoder","Measures position/speed.","Ex","مشفر.","Clicker"],["Torque","Twisting force.","Ex","عزم الدوران.","Muscle strength"],["DC Motor","Direct current motor.","Ex","محرك تيار مستمر.","Basic spinner"],["Servo Motor","Precise angle motor.","Ex","محرك سيرفو.","Knows its angle"],["Stepper Motor","Moves in discrete steps.","Ex","محرك خطوي.","Steps degree"],["Brushless Motor","Electronic switching motor.","Ex","محرك بدون فرش.","Drone motor"],["Motor Controller","Manages power/signals.","Ex","متحكم المحرك.","Smart box"],["Back EMF","Opposing voltage generated.","Ex","قوة دافعة عكسية.","Generator push"],["Stall Current","Current when prevented from turning.","Ex","تيار التوقف.","Power struggle"],["Commutation","Switching coil current.","Ex","التبديل.","Passing baton"],["Microstepping","Dividing full step.","Ex","خطوات دقيقة.","Tiny tiptoes"]]],
+            ["Lesson 7: Intro to Robotics",[["Robot","Programmable machine.","Ex","روبوت.","Smart machine"],["Robotics","Study of robots.","Ex","الروبوتات.","Science"],["Automation","Tasks with little human help.","Ex","أتمتة.","Machines running"],["Kinematics","Study of motion without force.","Ex","علم الحركة (بدون قوى).","Geometry of motion"],["Dynamics","Study of motion with force.","Ex","ديناميكا.","Physics of motion"],["End Effector","Robot hand/tool.","Ex","نهاية فاعلة.","Tool at tip"],["Degrees of Freedom (DOF)","Independent ways to move.","Ex","درجات الحرية.","How many joints"],["Actuator","Makes robot move.","Ex","مشغل.","Muscles"],["Sensor","Gathers info.","Ex","مستشعر.","Eyes and ears"],["Control System","Robot brain.","Ex","نظام التحكم.","Computer mind"],["Programming","Writing instructions.","Ex","برمجة.","Teaching script"],["Payload","Max weight to carry.","Ex","الحمولة.","Lifting capacity"],["Workspace","Reachable area.","Ex","مساحة العمل.","Bubble of space"],["Manipulator","Moving arm.","Ex","ذراع معالج.","Whole arm"],["Joint","Movable connection.","Ex","مفصل.","Elbow"],["Link","Rigid body between joints.","Ex","وصلة صلبة.","Bone"],["Trajectory","Path followed.","Ex","مسار الحركة.","Invisible line"],["Singularity","Position losing mobility.","Ex","نقطة التفرد.","Locked stiff"],["Robot Cell","Safe area for robot.","Ex","خلية الروبوت.","Caged workspace"],["Teach Pendant","Handheld controller.","Ex","وحدة تحكم يدوية.","Remote control"]]],
+            ["Lesson 8: Robot Kinematics",[["Coordinate System","Framework for positions.","Ex","نظام إحداثيات.","Invisible grid"],["Cartesian Coordinates","x, y, z positions.","Ex","إحداثيات ديكارتية.","3D graph paper"],["Polar Coordinates","Distance and angle.","Ex","إحداثيات قطبية.","Radar screen"],["Transformation","Converting coordinates.","Ex","تحويل.","Translating map"],["Rotation","Turning around axis.","Ex","دوران.","Spinning"],["Translation","Moving straight.","Ex","انتقال.","Sliding box"],["Matrix","Grid of numbers.","Ex","مصفوفة.","Math box"],["Homogeneous Transformation","Matrix for rotation+translation.","Ex","تحويل متجانس.","Ultimate math package"],["Forward Kinematics","Angles -> Position.","Ex","حركة أمامية.","Angles to Pos"],["Inverse Kinematics","Position -> Angles.","Ex","حركة عكسية.","Pos to Angles"],["Euler Angles","Roll, pitch, yaw.","Ex","زوايا أويلر.","Plane tilt"],["Quaternion","4-number rotation.","Ex","كواتيرنيون.","3D spins"],["Denavit-Hartenberg","4-number joint standard.","Ex","معلمات DH.","Standard blueprint"],["Jacobian Matrix","Joint speed to end speed.","Ex","مصفوفة جاكوبي.","Speed-conversion"],["Pose","Position + orientation.","Ex","الوضعية.","Where + Pointing"],["Roll-Pitch-Yaw","Sequence of rotations.","Ex","تدحرج-انحراف-انعراج.","Tilt and turn"],["Axis-Angle","Single axis rotation.","Ex","محور-زاوية.","Stick and spin"],["Workspace Analysis","Studying reachable positions.","Ex","تحليل مساحة العمل.","Mapping reach"],["Kinematic Chain","Series of links/joints.","Ex","سلسلة حركية.","Skeleton"],["Tool Center Point (TCP)","Point on end effector.","Ex","نقطة مركز الأداة.","Tip of pen"]]]
+        ];
+
+        // Format: [UnitTitle, [[Text, [A,B,C,D], ansIdx, exp], ...]]
+        const rawUq = [
+            ["Unit 1: Present Passive",[["Which sentence is written in the Present Simple Passive voice?",["The technician is checking the battery.","The battery is checked by the technician.","The technician will check the battery.","The battery was checked."],1,"Present passive format: Subject + am/is/are + Past Participle."],["The system __________ continuously to prevent unexpected failures.",["is monitored","are monitored","monitors","is monitoring"],0,"The subject 'system' is singular, requiring 'is monitored'."],["The sensor detects motion. (Convert this sentence to Passive)",["Motion are detected by the sensor.","Motion is detected by the sensor.","The sensor was detected by motion.","Motion has detected by the sensor."],1,"Active: 'detects' (Present simple). Passive: 'is detected by'."],["What is the present passive of 'The operator repairs the machine'?",["The machine is repaired by the operator.","The machine was repaired by the operator.","The machine is repair by the operator.","The machine repaired by the operator."],0,"'Repairs' is present tense, so the passive is 'is repaired'."],["In technical writing, why is the agent (by...) often omitted?",["Because the writer forgot it.","Because the action or object is more important than the agent.","To make the sentence longer.","To add complex details."],1,"Omitting the agent maintains focus on processes or systems."],["'Voltage is regulated carefully.' This sentence is an example of:",["Passive with agent","Active voice","Passive without agent","Compound sentence"],2,"It does not state WHO regulates the voltage, making it an agent-less passive."],["Correct the sentence: 'The cables is inspected daily.'",["The cables are inspect daily.","The cables are inspected daily.","The cables was inspected daily.","The cables is inspected daily."],1,"'Cables' is plural, so it must be paired with 'are' + past participle."],["Which response indicates direct strong agreement with: 'It's ideal.'?",["Absolutely.","Not a chance.","Good night.","Why?"],0,"'Absolutely' is a basic strong agreement expression in the Language Bank."],["Complete the dialogue: A: 'This is true.' B: 'You're __________.'",["wrong","right","fine","insane"],1,"Under 'Agreeing', 'You're right' is the natural, correct response."],["Select the correct spelling of the past participle of 'generate':",["generate","generating","generated","generates"],2,"The past participle of the regular verb 'generate' is 'generated'."],["The reports __________ automatically by the program every hour.",["is generated","are generated","generates","are generating"],1,"'Reports' is plural, so 'are generated' is the correct passive form."],["Which expression is categorized under 'Stating Your Concurrence'?",["I disagree completely.","I couldn’t agree with you more.","It’s not my style.","Understood."],1,"'I couldn’t agree with you more' shows complete agreement."],["A: 'I think it's fine.' B: '__________.' (Select polite agreement)",["Sure.","No can do.","You're dead wrong.","Not in a million years."],0,"'Sure' or 'Fine' are listed under polite/simple agreements."],["Rewrite without agent: 'The software is installed annually by the operator.'",["The software is installed annually.","The software is install annually.","The operator installed software annually.","Software are installed annually."],0,"Simply remove 'by the operator' to omit the agent."],["Which of the following is NOT an agreeing phrase in the syllabus?",["Well said.","I agree with you 100 percent.","That's out of the question.","I see what you mean."],2,"'That's out of the question' is a strong disagreement expression."],["Identify the mistake: 'Data are processed by the computer.'",["The sentence is correct.","The verb should be 'is' because 'Data' is treated as singular.","The past participle is wrong.","The agent cannot be 'by the computer'."],1,"In this textbook, 'Data is processed...' is specified as the correct answer."],["Complete the agreement sequence: A: 'It's a masterpiece.' B: 'Well said.' A: '__________.'",["Absolutely.","I hate it.","Nope.","Not if I can help it."],0,"Matches the graded Unit 1 dialogue block for strong, natural agreement."],["What is the past participle of the verb 'repair'?",["repaired","repairing","repairs","repaireded"],0,"The regular past participle form is 'repaired'."],["The controller regulates voltage. (Passive voice):",["Voltage is regulated by the controller.","Voltage is regulate by the controller.","Voltage was regulated.","Voltage is regulating by controller."],0,"'Voltage is regulated by the controller' uses correct present simple passive form."],["A: 'Do you agree?' B: '__________.' (Concurrence)",["Yes.","See you soon.","What time is it?","It's awful."],0,"'Yes' or 'I agree' represents simple, correct agreement."]]],
+            ["Unit 2: Modal Passive",[["Select the correct structure of a Modal Passive:",["Subject + modal + past participle","Subject + modal + be + past participle","Subject + be + modal + past participle","Subject + past participle + modal"],1,"Subject + modal + be + past participle"],["The system __________ monitored regularly to prevent system shutdowns.",["must","must be","should","can"],1,"'must be' is required for the passive construction."],["Which of the following sentences has a grammatical error?",["The equipment should be inspected daily.","The device can be repaired easily.","The system must monitored.","The cables may be replaced if damaged."],2,"Lacks 'be' in the modal passive structure."],["Change to modal passive: 'The engineer should inspect the cables.'",["The cables should inspect.","The cables should be inspected.","The cables should be inspect.","The cables must be inspected."],1,"Passive: 'The cables' + 'should be' + past participle 'inspected'."],["Change to modal passive: 'The operator can repair the device.'",["The device can be repaired.","The device can be repair.","The device can repair.","The device must be repaired."],0,"'The device can be repaired' is correct."],["Correct the sentence: 'The machine must be test before use.'",["The machine must tested before use.","The machine must be tested before use.","The machine should be test before use.","The machine must is tested."],1,"'be' must be followed by the past participle 'tested'."],["Who was credited with inventing the first telephone in 1876 according to Unit 2 reading?",["Thomas Edison","Alexander Graham Bell","Steve Jobs","Tesla"],1,"Alexander Graham Bell invented the first telephone in 1876"],["In leave-taking, what is a polite response to 'Nice meeting you'?",["Nice meeting you too.","You're wrong.","No can do.","Absolutely."],0,"'Nice meeting you too' is a natural, polite parting response."],["Complete the dialogue: A: 'Have a good trip!' B: 'Have a __________ trip.'",["safe","quiet","cheap","heavy"],0,"'Have a safe trip' is a standard travel leave-taking wish"],["What is the meaning of the travel phrase 'Bon voyage!'?",["Good afternoon","Have a good journey!","Nice to meet you","Where are you going?"],1,"It is a French borrowing meaning 'Have a good trip'."],["The updated program __________ weekly to ensure security patch compliance.",["should be updated","should updated","is update","should be update"],0,"Needs 'should be' + past participle 'updated'."],["Which expression is used for making plans to keep in touch?",["See you later.","Let's keep in touch.","Nice to see you.","Bye-bye."],1,"'Let's keep in touch' explicitly refers to maintaining contact."],["A: 'Are you ready to go?' B: '__________.' (Leave-taking matching)",["Ready to go.","I don't think so.","Likewise.","Indeed."],0,"Matches the pattern from graded dialogue Unit 2"],["The voltage __________ checked carefully by the technicians.",["must be","must","be checked","is check"],0,"'must be' is required for singular/plural with passive modal."],["A: 'Take care.' B: '__________.' (Leave-taking)",["Take care.","Not a chance.","What are you talking about?","You're wrong."],0,"'Take care' is often reciprocated"],["Correct the mistake: 'The software may be install annually.'",["The software may installed annually.","The software may be installed annually.","The software is installed annually.","The software may are installed annually."],1,"'install' must be 'installed'."],["The Soviet satellite launched in 1957 which marked the beginning of the space age was:",["Apollo 11","Sputnik","International Space Station","Prius"],1,"The Sputnik satellite was launched in 1957"],["A: 'I'll call you when I get home.' B: '__________.'",["Call when you get there.","I hate it.","It's hideous.","You're wrong."],0,"Matches 'Call when you get there'"],["Which of these is a simple leave-taking statement?",["Good-bye for now.","What are you doing here?","You haven't got the facts.","Yes."],0,"'Good-bye for now' is a standard temporary farewell."],["How should you pronounce the ending of 'I'll be in touch' in connected speech?",["Separating each word clearly with pauses","Linking the words smoothly as /aɪl biː ɪn tʌtʃ/","Saying only touch","None of the above"],1,"Connected speech links words smoothly without artificial pauses."]]],
+            ["Unit 3: Cause-Effect",[["Which connector indicates a 'Cause/Reason' in writing?",["so","therefore","because","consequently"],2,"'because' introduces the reason/cause."],["Which connectors show a 'Result/Effect'?",["because / due to","so / therefore","although / though","since / as"],1,"'so' and 'therefore' indicate results or effects."],["The system fails __________ the voltage is unstable.",["so","therefore","because","due to"],2,"'The voltage is unstable' is a complete clause, so 'because' is used."],["The voltage is unstable; __________, the system fails.",["because","so","therefore","although"],2,"'therefore' acts as a transition"],["Correct the sentence: 'The system fail because the voltage unstable.'",["The system fails because the voltage is unstable.","The system is fail because voltage unstable.","The system fail because the voltage is unstable.","System fails because the voltage unstable."],0,"'system' is singular (fails), and 'voltage' needs a linking verb 'is'."],["The cooling system is blocked, __________ the machine overheats.",["because","so","therefore","since"],1,"'so' acts as a coordinating conjunction introducing a result."],["Combine using passive voice: 'The technician repairs the system because the voltage is unstable.'",["The system is repaired because the voltage is unstable.","The system repairs because the voltage is unstable.","The technician is repaired because voltage unstable.","The system repaired by the technician because voltage unstable."],0,"Passive: 'The system is repaired...'"],["What is a hybrid car according to the text in Unit 3?",["A car that runs only on electricity","A car that combines a gasoline engine with an electric motor","A steam-powered car","A solar car with solar cells"],1,"Defined in the text as combining gasoline and electric power."],["Which is a correct agreement phrase showing 100 percent concurrence?",["I have no problem with that.","I agree with you 100 percent.","Right.","Sure."],1,"An exact match for 'I agree with you 100 percent'"],["What is the natural reduction pronunciation of 'You're right'?",["/jʊr raɪt/","/juː aːr raɪt/","/jɔː rɪ-g-h-t/","/jʊər raɪ-tɪd/"],0,"Pronounced with a weak vowel in 'you're': /jʊr raɪt/."],["The equipment __________ because the fan is blocked.",["overheats","overheat","is overheat","overheated"],0,"The singular subject 'equipment' requires singular verb 'overheats'."],["Complete the sentence: 'The device shuts down __________ the battery is low.'",["so","therefore","because","although"],2,"'the battery is low' is the reason/cause."],["The battery is low; __________, the device shuts down.",["because","so","therefore","due to"],2,"Semicolon and comma context indicates transition 'therefore' is required."],["A: 'I see what you're saying.' B: '__________.' (Under Agreement Bank)",["I hear what you're saying.","You're wrong.","Not in a million years.","What are you talking about?"],0,"Graded Medium Dialogue 4 from Unit 3."],["Which of the following contains an error in agreement/concurrence expression?",["I couldn't agree with you more.","I agree with you 100 percent.","I don't think so.","I have no problem with that."],2,"'I don't think so' represents disagreement."],["The program crashes __________ the memory is full.",["so","therefore","because","due to"],2,"Introduces the cause of the crash."],["Which word is a rising intonation question checking agreement?",["Are you following me?","Absolutely.","Well said.","I agree."],0,"Yes/No questions like 'Are you following me?' use rising intonation."],["The cables __________ because the machine overheats.",["is inspected","are inspected","inspects","are inspect"],1,"'cables' is plural, so it requires 'are inspected'."],["A: 'That's true.' B: '__________.' (Dialogue 5, Unit 1/3)",["Right.","Wrong.","I hate it.","Bon voyage!"],0,"Under simple short dialogues"],["The processor is overloaded; therefore, the system __________.",["slow down","slows down","is slow down","slowing down"],1,"The singular noun 'system' requires the singular verb 'slows down'."]]],
+            ["Unit 4: Comparatives",[["What is the comparative form of the short adjective 'small'?",["more small","smaller","smallest","smallerr"],1,"Short adjectives add '-er'"],["What is the comparative form of the long adjective 'efficient'?",["efficienter","more efficient","most efficient","efficient"],1,"Long adjectives use 'more'"],["Correct the sentence: 'This system is more fast than the old one.'",["This system is faster than the old one.","This system is fastest than the old one.","This system is more faster than the old one.","This system is fast than the old one."],0,"'fast' is a short adjective; its comparative form is 'faster'."],["Which of the following comparative sentences is correct?",["This machine is efficienter than the old one.","The software is more easier than before.","System A is more reliable than System B.","The processor is powerfuler than the old one."],2,"'reliable' is a long adjective, so 'more reliable' is correct."],["Complete the comparison: 'The new device is __________ (small) than the previous model.'",["more small","smaller","smallest","more smaller"],1,"'smaller' is the correct comparative"],["Write the comparison with explanation: 'This machine is more efficient than the old model __________ it consumes less energy.'",["so","because","therefore","although"],1,"Introduces the reason"],["Which of these expressions is categorized as a Categorical Disagreement?",["I disagree completely.","That's not right.","Nope.","It's not my style."],1,"Categorical Disagreement"],["Complete the disagreement expression: 'I couldn't disagree __________.'",["more","less","so","completely"],0,"Standard strong disagreement expression."],["A: 'It's perfect.' B: '__________.' (Disagreement Graded Dialogue)",["You're dead wrong.","Absolutely.","I agree.","Yes."],0,"From Short Dialogue 9"],["Which of these represents a strong rejection of a style or design?",["It's fine.","I can't stand it.","Understood.","I hear you."],1,"Strong emotional dislike"],["The new equipment is __________ (expensive) than the old one.",["expensiver","more expensive","expensive","most expensive"],1,"'expensive' is a long adjective"],["Correct the sentence: 'This device is safer that the old one.'",["This device is safer than the old one.","This device is more safe that the old one.","This device is safer then the old one.","This device is more safer than the old one."],0,"Comparatives are followed by 'than'"],["What should you check before submitting an online course registration according to Unit 4 reading?",["The teacher's home address","Prerequisites and schedule conflicts","Your social media account","The computer price"],1,"confirm prerequisites"],["What is the first step in backing up files on a computer?",["Choose a backup method","Select the files or folders","Verify that files are copied","Store device safely"],1,"According to Passage 2"],["A: 'It's great.' B: '__________.' (Under Disagreeing Short Dialogues)",["I don't think so.","No can do.","Nice to meet you.","Sure."],0,"Dialogue 3"],["A: 'This is true.' B: 'That's not true.' A: 'Really?' B: '__________.' (Medium Dialogue)",["You've got the facts wrong.","I love it.","Absolutely.","Take care."],0,"Matches Medium Dialogue 1"],["Which word is a strong refusal statement?",["No can do.","Indeed.","You're right.","Sure thing."],0,"Listed under Expressing Refusal."],["A: 'Let's do it.' B: 'That's __________.' (Rejection of Proposition)",["out of the question","ideal","fabulous","true"],0,"Rejecting a proposal"],["Complete the comparative: 'The new system is __________ (safe) than the old one.'",["safer","more safe","safest","more safer"],0,"The correct comparative form is 'safer'."],["Complete the dialogue: A: 'It's amazing.' B: 'I __________ completely.'",["agree","disagree","understand","know"],1,"Strong disagreement expression"]]],
+            ["Unit 5: Process Control",[["Combine 'The system is repaired' and 'The voltage is unstable' using because:",["The system is repaired because the voltage is unstable.","The system is repaired so the voltage is unstable.","The system is repaired, therefore the voltage is unstable.","Because system is repaired, the voltage unstable."],0,"shows the reason/cause."],["Combine 'System A is more efficient than System B' and 'It is tested regularly' using 'and':",["System A is more efficient than System B and it is tested regularly.","System A is more efficient than System B because it is tested regularly.","System A is more efficient than System B so it is tested regularly.","System A is more efficient than System B, therefore it is tested regularly."],0,"Uses 'and' to connect"],["Correct the double mistake: 'The system are tested because the voltage unstable.'",["The system is tested because the voltage is unstable.","The system are tested because the voltage is unstable.","The system is tested because the voltage unstable.","System is tested because voltage is unstable."],0,"Fixes 'are' to 'is' and adds missing verb 'is'"],["Correct the mistake: 'This machine is more efficient then the old one and it is repair regularly.'",["This machine is more efficient than the old one and it is repaired regularly.","This machine is efficienter than the old one and it is repaired regularly.","This machine is more efficient then the old one and it is repaired regularly.","This machine is more efficient than the old one and it is repair regularly."],0,"Changes 'then' to 'than' and 'repair' to 'repaired'."],["What is the first step in setting up a home Wi-Fi network?",["Create an SSID and password","Connect the modem to the internet source and turn it on","Connect devices to the network","Access the router settings"],1,"Passage 1"],["What is the first step in installing software on a computer?",["Download the software or insert the installation disk","Follow the on-screen instructions","Open the software and test","Run the installation file"],0,"Passage 2"],["The software __________ monthly because it performs slowly.",["is updated","are updated","updates","updated"],0,"'software' is singular"],["Which word carries the main stress in: 'That's NOT true.'?",["That's","NOT","true","None"],1,"Emphasis on NOT"],["Complete the phrase: 'Not in a __________ years.'",["hundred","thousand","million","billion"],2,"Extreme refusal"],["A: 'It's accurate.' B: '__________.' (Under Disagreeing Dialogues)",["You haven't got the facts.","Absolutely.","I agree with you.","Nice to meet you."],0,"From Dialogue 10"],["The cables __________ daily because the machine overheats.",["is inspected","are inspected","inspect","inspected"],1,"'cables' is plural"],["A: 'It's beautiful.' B: 'I hate it.' A: 'That's strong.' B: '__________.'",["I can't stand it.","Absolutely.","Take care.","You're right."],0,"From Dialogue 4"],["A: 'Let's do it.' B: 'That's out of the question.' A: 'Why?' B: '__________.'",["That's insane.","No can do.","Absolutely.","See you later."],0,"From Dialogue 5"],["Which expression is used for 'Direct Correction'?",["You're wrong.","It's not my style.","I have no problem with that.","Understood."],0,"Direct correction"],["Complete the sentence: 'The processor is upgraded __________ performance is poor.'",["because","so","therefore","although"],0,"reason/cause"],["A: 'It's perfect.' B: 'You've got it all wrong.' A: 'Really?' B: '__________.'",["You don't know what you're talking about.","Absolutely.","Good night.","Bon voyage!"],0,"Dialogue 7"],["The updated program is easier to use than the old one __________ it has a simple interface.",["so","because","therefore","but"],1,"Explains why"],["What is the meaning of 'SSID' in home Wi-Fi network setup?",["System Security Identifier","Network Name","Password","Signal Divider"],1,"Network name"],["Which of these is an 'Extreme Refusal' statement?",["That's insane.","Not in a million years.","I disagree.","No."],1,"Extreme refusal"],["Complete the dialogue: A: 'It's accurate.' B: 'You haven't got the facts.' A: 'Really?' B: '__________.'",["You don't know the first thing about it.","Absolutely.","Sure.","Goodbye."],0,"Dialogue 10"]]],
+            ["Unit 6: Mastery Practice",[["Rewrite in the present passive: 'The technician tests the system.'",["The system is tested by the technician.","The system is test by the technician.","The system tests the technician.","The system was tested by the technician."],0,"Active present Simple to Passive: 'is tested by'."],["Complete the sentence: 'The equipment should __________ daily.'",["be inspected","inspected","inspect","be inspect"],0,"Modal 'should' + 'be' + past participle 'inspected'."],["The cables __________ annually if they are damaged.",["may be replaced","may replaced","are replaced","replaces"],0,"Modal passive 'may be replaced' is correct."],["Correct the comparative error: 'The processor is powerfuler than before.'",["The processor is more powerful than before.","The processor is powerfulest than before.","The processor is more powerfuler than before.","The processor is powerful than before."],0,"'powerful' is a long adjective; its comparative is 'more powerful'."],["Correct the double mistake: 'The system are tested regularly and it must checked daily.'",["The system is tested regularly and it must be checked daily.","The system are tested regularly and it must checked daily.","The system is tested regularly and it must checked daily.","System is tested regularly and must checked daily."],0,"Fixes 'are' to 'is' and adds missing 'be'"],["A: 'Take care.' B: '__________.' (Leave-taking)",["Take care.","Not a chance.","You're wrong.","Absolutely."],0,"Reciprocates 'Take care'"],["A: 'Bon voyage!' B: '__________.'",["Have a safe journey.","You too.","I disagree.","Yes."],0,"Short dialogue"],["Which word carries the main stress in: 'DRIVE CAREfully.'?",["DRIVE","CAREfully","Both have heavy stress","Neither"],2,"Both content words carry stress"],["Complete the phrase: 'Good running __________ you.'",["into","to","for","with"],0,"'Good running into you'"],["A: 'I'll call you when I get home.' B: 'Call when you get there.' A: 'Don't forget to call.' B: '__________.'",["I'll be in touch.","You're wrong.","I hate it.","Fine."],0,"Graded Dialogue 6"],["The software __________ regularly and it is faster than the previous version.",["is updated","are updated","updates","updated"],0,"'software' is singular; requires passive"],["The equipment is __________ (heavy) than the old model.",["more heavy","heavier","heaviest","heavyer"],1,"Changes -y to -i and add -er"],["A: 'Have a nice flight.' B: 'Have a safe journey.' A: 'All the best.' B: '__________.'",["Take care of yourself.","I hate it.","Absolutely.","What time is it?"],0,"Medium Dialogue 8"],["A: 'Write me.' B: 'Text me.' A: 'I'm on Facebook.' B: '__________.'",["Let's keep in touch.","Take care.","No way.","Right."],0,"Graded Medium Dialogue 9"],["Which expression is used to check readiness?",["Are you ready to go?","Farewell.","Take care.","All the best."],0,"Yes/No question checking readiness"],["The device is more powerful than the previous model and it __________ easily.",["can be repaired","can repaired","repaired","can repair"],0,"Modal passive"],["What is the past participle of 'update'?",["update","updated","updating","updates"],1,"Past participle"],["Correct the mistake: 'The new equipment is more cheaper.'",["The new equipment is cheaper.","The new equipment is cheapest.","The new equipment is more cheap.","The new equipment is more cheaper."],0,"Double comparatives are wrong"],["Complete the phrase: 'Let's keep in __________.'",["touch","contact","wire","line"],0,"'Let's keep in touch'"],["Which of these is a formal leave-taking expression?",["It was a pleasure meeting you.","Later.","See you.","Bye-bye."],0,"Formal goodbye"]]],
+            ["Unit 7: Sequencing",[["What is the first step when setting up a smart home device?",["Configure the device settings","Unbox the device and read the instruction manual","Save backup settings","Troubleshoot issues"],1,"Passage 1"],["What is firmware?",["The physical body of a device","Software that controls a device","An app icon","A Wi-Fi antenna"],1,"Software that controls a device"],["What does configure mean?",["To clean a device","To set preferences and settings","To turn off the power","To connect to Wi-Fi only"],1,"To set preferences and settings"],["What does troubleshoot mean?",["To find and fix problems","To install apps","To monitor progress","To purchase devices"],0,"To find and fix problems"],["What are flashcards?",["Cards used to memorize words or facts","Digital certificates of completion","Wi-Fi routers","A type of memory card"],0,"Cards used to memorize words or facts"],["What does evaluate mean?",["To check progress or quality","To start a new lesson","To skip exercises","To join a classes"],0,"check progress or quality"],["What does reinforce mean?",["To delete mistakes","To strengthen understanding","To skip lessons","To change passwords"],1,"strengthen understanding"],["Expand into a correct sentence: 'new system / efficient / old model / because / advanced software'",["The new system is more efficient than the old model because it uses advanced software.","The new system efficient than old model because advanced software.","New system is more efficient because old model used advanced software.","The new system is efficienter than old model because advanced software."],0,"Proper comparative structure + because reason clause."],["Correct the sentence: 'The cables must inspect daily.'",["The cables must be inspected daily.","The cables must inspected daily.","The cables should inspect daily.","The cables must be inspect daily."],0,"Requires modal passive"],["Combine: 'The battery is low. The device shuts down. It is replaced immediately.'",["The battery is low, so the device shuts down and it is replaced immediately.","The battery is low because the device shuts down and it is replaced immediately.","The battery is low, therefore the device shuts down because it is replaced immediately.","The battery is low so device shuts down to be replaced immediately."],0,"Uses coordinating conjunctions"],["Improve the weak sentence: 'The system good and efficient.'",["The system is more efficient than the previous model and it is tested regularly.","The system is good and efficient.","System is more efficient.","The system was good and efficient."],0,"Provides a full, expanded statement"],["Correct the paragraph: 'The new system are more efficient then the old one because it use advanced technology. The cables must inspected daily.'",["The new system is more efficient than the old one because it uses advanced technology. The cables must be inspected daily.","The new system are more efficient than the old one because it uses advanced technology. The cables must be inspected daily.","The new system is more efficient then the old one because it use advanced technology. The cables must inspected daily.","None of the above."],0,"Fixes multiple grammar errors"],["A: 'Is this seat taken?' B: 'No.' A: 'May I join you?' B: 'Of course.' A: 'What are you drinking?' B: 'Coffee.' A: 'I love it.' B: '__________.'",["Absolutely.","I hate it.","You're wrong.","Good night."],0,"Graded Dialogue 2"],["A: 'What time is it?' B: 'It’s ten past three.' A: 'That’s not true.' B: 'It is.' A: 'You’ve got the facts wrong.' B: 'It’s quarter past three.' A: '__________.'",["That’s true.","You're wrong.","Take care.","Bon voyage!"],0,"Graded Dialogue 3"],["A: 'I’d like you to meet Sara.' B: 'Nice to meet you.' C: 'Nice to meet you.' B: 'I think it’s ideal.' C: '__________.'",["Absolutely.","I disagree.","No way.","Later."],0,"Graded Dialogue 8"],["What is the correct sequencing task order for setting up smart home devices?",["Unbox/Read -> Connect/Test -> Configure/Troubleshoot","Configure -> Unbox -> Troubleshoot","Troubleshoot -> Test -> Unbox","None of the above"],0,"Chronological steps"],["Which word represents a sequencing signal indicating the first step?",["first","next","finally","therefore"],0,"'first' signals the inception"],["In the sentence 'The voltage is checked carefully', what is 'carefully'?",["Noun","Verb","Adjective","Adverb"],3,"Adverb of manner"],["Complete the dialogue: A: 'Excuse me.' B: 'Yes?' A: 'Could I get by, please?' B: 'Of course.' A: 'Sorry for the inconvenience.' B: '__________.'",["That's fine.","Not in a million years.","Take care.","You're wrong."],0,"Graded Dialogue 7"],["Complete the dialogue: A: 'How have you been?' B: 'Not so well.' A: 'Not too good?' B: 'Not very well.' A: 'Could be better?' B: '__________.'",["Yes.","No.","Not in a million years.","Absolutely."],0,"Dialogue 10"]]],
+            ["Unit 8: Sentence Structure",[["A simple sentence contains exactly:",["One independent clause","Two independent clauses","One independent and one dependent clause","No clauses at all"],0,"A simple sentence has only one independent clause."],["A compound sentence contains:",["Two or more independent clauses joined by coordinating conjunctions","One independent and one dependent clause","Only one main idea with a phrase","A dependent clause starting with because"],0,"Compound sentences connect independent clauses"],["A complex sentence contains:",["One independent clause and at least one dependent clause","Two independent clauses and a coordinate","Only compound subjects and objects","No dependent clauses"],0,"A complex sentence combines clauses"],["Identify the sentence type: 'The system operates automatically.'",["Simple","Compound","Complex","Fragment"],0,"It has one subject and one verb"],["Identify the sentence type: 'The device is small, but it is powerful.'",["Simple","Compound","Complex","Adverbial"],1,"Two independent clauses connected by ', but'."],["Identify the sentence type: 'The system shuts down because the voltage is unstable.'",["Simple","Compound","Complex","Conditional"],2,"Contains one independent clause and one dependent clause"],["Combine into a compound sentence: 'The voltage increases. The system shuts down.'",["The voltage increases, so the system shuts down.","The voltage increases because the system shuts down.","When the voltage increases, the system shuts down.","Although the voltage increases, the system shuts down."],0,"Uses ', so' to connect"],["Combine into a complex sentence: 'The temperature increases. The machine stops.'",["The temperature increases, so the machine stops.","When the temperature increases, the machine stops.","The temperature increases, and the machine stops.","The temperature increases; the machine stops."],1,"Uses subordinating conjunction 'When'"],["Correct the structural error: 'Because the voltage is unstable, so the system shuts down.'",["Because the voltage is unstable, the system shuts down.","Because the voltage is unstable, so system shuts down.","Since the voltage is unstable, so the system shuts down.","The voltage is unstable so the system shuts down."],0,"Do not use 'because' and 'so' together"],["What was the duration of the Wright brothers' first successful flight in 1903?",["12 seconds","12 minutes","12 hours","12 days"],0,"12 seconds"],["What is an 'itinerary' in travel booking contexts?",["Ticket price","Travel schedule/route","Luggage policy","Hotel review"],1,"Travel schedule"],["What does 'confirmation' mean in online travel bookings?",["Cancellation proof","Proof that booking is complete","A review score","A travel document"],1,"Proof that booking is complete"],["Correct the punctuation: 'When the temperature increases the machine stops.'",["When the temperature increases, the machine stops.","When the temperature increases; the machine stops.","When the temperature increases, so the machine stops.","The sentence is already correct."],0,"A comma is required after an introductory dependent clause."],["Correct the sentence: 'The system is efficient and reliable but it requires maintenance.'",["The system is efficient and reliable, but it requires maintenance.","The system is efficient and reliable but, it requires maintenance.","The system is efficient, and reliable, but it requires maintenance.","The system is efficient and reliable but it requires maintenance."],0,"A comma is required before 'but'"],["Correct the double error: 'Although the device is small but it is powerful.'",["Although the device is small, it is powerful.","Although the device is small, but it is powerful.","The device is small, but it is powerful.","Both A and C are correct grammatical structures."],3,"Do not use 'although' and 'but' together."],["The battery is low; __________, the device turns off automatically.",["therefore","so","because","but"],0,"The semicolon and comma punctuation requires 'therefore'."],["Which transition is used to introduce an example?",["For instance","Therefore","Similarly","In conclusion"],0,"'For instance' introduces illustrations."],["Which transition is used to summarize or conclude?",["In summary","Moreover","However","Similarly"],0,"'In summary' summarizes or concludes"],["Which of the following is a simple sentence?",["The technician checks the battery and the motor.","The technician checks the battery, and the motor runs.","When the technician checks the battery, the motor runs.","The technician checks the battery so the motor runs."],0,"'checks the battery and the motor' has a compound object but only one independent clause"],["What is the first step when booking travel online according to Passage 3?",["A person searches for flights, trains, or hotels","Complete the booking process","Prepare for travel","Print tickets and itineraries"],0,"Passage 3 states: 'First...'"]]]
+        ];
+
+        // Format Mech: {secName: [{title, type, [opts], [{q,a,hint},...]}, ...]}
+        const rawMq = {
+            "Reading Comprehension & Tech Vocab": [
+                {t:"Match the Words",type:"match",opts:["continuous observation","electrical pressure","protection","device that detects conditions","machine part","automatic operation","computerized control","system that reduces temperature","machine or device","software improvement"],q:[["Sensor","device that detects conditions","It senses things."],["Voltage","electrical pressure","Measured in Volts."],["Component","machine part","A piece of a whole."],["Cooling System","system that reduces temperature","Keeps things cold."],["Monitoring","continuous observation","Watching constantly."],["Security","protection","Keeping safe from risks."],["Equipment","machine or device","Tools used for a purpose."],["Automation","automatic operation","Doing tasks automatically."],["Software Update","software improvement","Making programs better."],["Digital Control","computerized control","Using computers to manage."]]},
+                {t:"Reading Passage 1 - Multiple Choice",text:"Modern manufacturing systems depend on automation and digital control. Sensors monitor machine performance continuously. Engineers install cooling systems to prevent overheating. Software updates improve security and operational efficiency. Modern systems are more reliable than older systems because they require less manual intervention.",type:"mcq",opts:[],q:[["Modern manufacturing depends on:",["paper records","automation and digital control","manual control"],"automation and digital control"],["Sensors monitor:",["machine performance","weather","roads"],"machine performance"],["Cooling systems prevent:",["software updates","overheating","communication"],"overheating"],["Software updates improve:",["security","efficiency","both a and b"],"both a and b"],["Modern systems are:",["less reliable","more reliable","slower"],"more reliable"]]},
+                {t:"Reading Passage 1 - Short Answer",type:"text",opts:[],q:[["Why are cooling systems installed?","To prevent overheating.","Think about high temperatures."],["What improves operational efficiency?","Software updates.","It improves security too."],["Why are modern systems more reliable?","Because they require less manual intervention.","Less human work needed."]]},
+                {t:"Reading Passage 2 - Multiple Choice",text:"Sensors play an important role in modern manufacturing systems. They detect temperature, pressure, and machine conditions. Data collected by sensors helps engineers identify problems quickly. As a result, maintenance becomes more efficient and system failures are reduced. Modern sensors are more accurate than older monitoring devices.",type:"mcq",opts:[],q:[["Sensors detect:",["temperature and pressure","passwords","documents"],"temperature and pressure"],["Sensor data helps engineers:",["ignore problems","identify problems quickly","increase failures"],"identify problems quickly"],["Maintenance becomes:",["less efficient","more expensive","more efficient"],"more efficient"],["System failures are:",["reduced","increased","ignored"],"reduced"],["Modern sensors are:",["more accurate","slower","weaker"],"more accurate"]]},
+                {t:"Technical Vocabulary in Context",type:"inline",opts:["sensor","voltage","cooling system","automation","software update"],q:[["A ______ detects temperature and pressure.","sensor"],["A ______ prevents overheating.","cooling system"],["Modern factories depend on ______.","automation"],["______ improves software performance.","software update"],["Unstable ______ may damage equipment.","voltage"]]}
+            ],
+            "Passive Voice & Modal Passive": [
+                {t:"Change Active to Passive",type:"text",opts:[],q:[["The technician monitors the system.","The system is monitored by the technician.","Start with 'The system'"],["The engineer checks the cables.","The cables are checked by the engineer.","Start with 'The cables'"],["The operator repairs the device.","The device is repaired by the operator.","Start with 'The device'"],["The company updates the software.","The software is updated by the company.","Start with 'The software'"],["The technician cleans the machine.","The machine is cleaned by the technician.","Start with 'The machine'"],["Engineers inspect the equipment.","The equipment is inspected by engineers.","Start with 'The equipment'"],["The company installs sensors.","Sensors are installed by the company.","Start with 'Sensors'"],["The operator controls the machine.","The machine is controlled by the operator.","Start with 'The machine'"],["The engineer monitors voltage levels.","Voltage levels are monitored by the engineer.","Start with 'Voltage levels'"],["The technician tests the cooling system.","The cooling system is tested by the technician.","Start with 'The cooling system'"]]},
+                {t:"Change Passive to Active",type:"text",opts:[],q:[["The system is monitored continuously.","Technicians monitor the system continuously.","Who monitors it? (Technicians)"],["The cables are checked regularly.","Engineers check the cables regularly.","Who checks them? (Engineers)"],["The machine is repaired by the technician.","The technician repairs the machine.","Start with 'The technician'"],["The software is updated every month.","The company updates the software every month.","Who updates it? (The company)"],["The equipment is inspected carefully.","Engineers inspect the equipment carefully.","Who inspects? (Engineers)"],["Sensors are installed by engineers.","Engineers install sensors.","Start with 'Engineers'"],["The cooling system is activated automatically.","The system activates the cooling system automatically.","What activates it? (The system)"],["The voltage is monitored continuously.","Engineers monitor the voltage continuously.","Who monitors? (Engineers)"],["The machine is controlled by the operator.","The operator controls the machine.","Start with 'The operator'"],["Software updates are installed regularly.","The company installs software updates regularly.","Who installs? (The company)"]]},
+                {t:"Complete the Sentences (Modal Passive)",type:"inline",opts:[],q:[["The system must ______ (monitor) regularly.","be monitored"],["The equipment should ______ (inspect) daily.","be inspected"],["The device can ______ (repair) easily.","be repaired"],["The cables may ______ (replace) annually.","be replaced"],["The software should ______ (update) regularly.","be updated"],["Sensors must ______ (install) carefully.","be installed"],["The cooling system can ______ (activate) automatically.","be activated"],["Voltage levels should ______ (check) frequently.","be checked"],["The machine may ______ (repair) quickly.","be repaired"],["Software updates must ______ (install) periodically.","be installed"]]},
+                {t:"Correct the Mistakes",type:"text",opts:[],q:[["The system must monitored regularly.","The system must be monitored regularly.","Missing 'be'"],["The equipment should inspected daily.","The equipment should be inspected daily.","Missing 'be'"],["The device can repaired easily.","The device can be repaired easily.","Missing 'be'"],["The cables may replaced annually.","The cables may be replaced annually.","Missing 'be'"],["The software is install every year.","The software is installed every year.","Check verb form"],["Sensors must installed correctly.","Sensors must be installed correctly.","Missing 'be'"],["The machine should repaired immediately.","The machine should be repaired immediately.","Missing 'be'"],["The cooling system can activated automatically.","The cooling system can be activated automatically.","Missing 'be'"],["The voltage should checked regularly.","The voltage should be checked regularly.","Missing 'be'"],["Software updates may installed monthly.","Software updates may be installed monthly.","Missing 'be'"]]},
+                {t:"Multiple Choice",type:"mcq",opts:[],q:[["The equipment ______ regularly.",["inspect","is inspected","inspected"],"is inspected"],["The system must ______ continuously.",["monitored","be monitored","monitoring"],"be monitored"],["Sensors ______ by engineers.",["are installed","is installed","install"],"are installed"],["The cables should ______ annually.",["replaced","be replaced","replacing"],"be replaced"],["The software ______ every month.",["update","is updated","updating"],"is updated"],["The machine can ______ easily.",["repair","repaired","be repaired"],"be repaired"],["Voltage levels ______ continuously.",["are monitored","is monitored","monitor"],"are monitored"],["The cooling system ______ automatically.",["activated","is activated","activate"],"is activated"],["The equipment should ______ carefully.",["inspect","be inspected","inspected"],"be inspected"],["Software updates ______ regularly.",["are installed","is installed","install"],"are installed"]]}
+            ],
+            "Cause-Effect & Comparatives": [
+                {t:"Combine the Sentences",type:"text",opts:[],q:[["The voltage is unstable. The system fails. (Use 'so')","The voltage is unstable, so the system fails.","Cause, so Effect"],["The battery is low. The device shuts down. (Use 'therefore')","The battery is low, therefore the device shuts down.","Cause, therefore Effect"],["The fan is blocked. The machine overheats. (Use 'therefore')","The fan is blocked; therefore, the machine overheats.","Use semi-colon before therefore"],["The software is outdated. System performance decreases. (Use 'so')","The software is outdated, so system performance decreases.","Cause, so Effect"],["The sensor is damaged. The machine stops. (Use 'therefore')","The sensor is damaged, therefore the machine stops.","Cause, therefore Effect"],["The cooling system fails. The temperature increases. (Use 'so')","The cooling system fails, so the temperature increases.","Cause, so Effect"],["The cables are loose. The equipment malfunctions. (Use 'therefore')","The cables are loose, therefore the equipment malfunctions.","Cause, therefore Effect"],["Security improves. The software is updated regularly. (Use 'because')","Security improves because the software is updated regularly.","Effect because Cause"],["The machine is overloaded. The motor overheats. (Use 'therefore')","The machine is overloaded, therefore the motor overheats.","Cause, therefore Effect"],["Failures are reduced. Engineers inspect the system regularly. (Use 'because')","Failures are reduced because engineers inspect the system regularly.","Effect because Cause"]]},
+                {t:"Multiple Choice (Cause-Effect)",type:"mcq",opts:[],q:[["The battery is low; ______ the device shuts down.",["because","therefore","although"],"therefore"],["The machine overheats ______ the fan is blocked.",["because","however","therefore"],"because"],["Engineers inspect equipment regularly; ______ failures are reduced.",["because","therefore","although"],"therefore"],["Security improves ______ software updates are installed.",["because","therefore","however"],"because"],["The sensor failed; ______ the machine stopped.",["because","therefore","although"],"therefore"]]},
+                {t:"Complete the Sentences",type:"inline",opts:["because","therefore","so"],q:[["The voltage is unstable; ______ the system fails.","therefore"],["The machine stops ______ the sensor is damaged.","because"],["The software is updated regularly; ______ performance improves.","therefore"],["The cooling system failed; ______ temperature increased.","therefore"],["Failures are reduced ______ engineers inspect equipment regularly.","because"]]},
+                {t:"Complete Using Correct Comparative",type:"inline",opts:[],q:[["This machine is ______ (efficient) than the old one.","more efficient"],["The new system is ______ (safe) than the previous system.","safer"],["This processor is ______ (powerful) than the old processor.","more powerful"],["Modern sensors are ______ (accurate) than older sensors.","more accurate"],["Automated systems are ______ (reliable) than manual systems.","more reliable"],["The new software is ______ (fast) than the old version.","faster"],["Digital control systems are ______ (effective) than traditional controls.","more effective"],["This machine is ______ (advanced) than the previous model.","more advanced"],["The updated system is ______ (secure) than the old system.","more secure"],["Modern equipment is ______ (efficient) than older equipment.","more efficient"]]},
+                {t:"Multiple Choice (Comparatives)",type:"mcq",opts:[],q:[["Modern systems are ______ than older systems.",["reliable","more reliable","most reliable"],"more reliable"],["This machine is ______ than the old machine.",["efficient","more efficient","efficiency"],"more efficient"],["The new software is ______ than the old version.",["faster","fast","fastest"],"faster"],["Modern sensors are ______ than older sensors.",["accurate","more accurate","accuracy"],"more accurate"],["Automated systems are ______ than manual systems.",["more reliable","reliable","reliability"],"more reliable"]]},
+                {t:"Error Correction",type:"text",opts:[],q:[["The new software is more easier than the old version.","The new software is easier than the old version.","Remove 'more'"],["Modern systems are reliabler than old systems.","Modern systems are more reliable than old systems.","Use 'more' for long words"],["This machine is more faster than the previous one.","This machine is faster than the previous one.","Remove 'more'"],["The new sensor is accurate than the old sensor.","The new sensor is more accurate than the old sensor.","Add 'more'"],["Automated systems are more safer than manual systems.","Automated systems are safer than manual systems.","Remove 'more'"]]}
+            ],
+            "Sequencing & Functional Communication": [
+                {t:"Complete the Process",type:"inline",opts:["First","Next","Then","After that","Finally"],q:[["Software Update: ______ the technician downloads the update.","First"],["Software Update: ______ the software is installed.","Next"],["Software Update: ______ the system is restarted.","Then"],["Software Update: ______ performance is checked.","After that"],["Software Update: ______ the update process is completed.","Finally"],["Sensor Installation: ______ the technician selects the sensor.","First"],["Sensor Installation: ______ the sensor is connected.","Next"],["Sensor Installation: ______ the wiring is inspected.","Then"],["Sensor Installation: ______ calibration is performed.","After that"],["Sensor Installation: ______ the system is tested.","Finally"]]},
+                {t:"Arrange the Steps",type:"order",opts:[],q:[["Cooling System Maintenance",["A. Check system performance.","B. Turn off the machine.","C. Inspect the cooling fan.","D. Restart the machine.","E. Clean the cooling components."],["B. Turn off the machine.","C. Inspect the cooling fan.","E. Clean the cooling components.","D. Restart the machine.","A. Check system performance."]],["Equipment Inspection",["A. Record the results.","B. Inspect the equipment.","C. Prepare inspection tools.","D. Report any problems.","E. Test system operation."],["C. Prepare inspection tools.","B. Inspect the equipment.","E. Test system operation.","A. Record the results.","D. Report any problems."]]]},
+                {t:"Choose the Best Response",type:"mcq",opts:[],q:[["\"Automation improves productivity.\"",["I agree completely.","Goodbye.","Good luck."],"I agree completely."],["\"Could you explain digital control?\"",["Certainly.","Congratulations.","Never mind."],"Certainly."],["\"What do you think about sensors?\"",["In my opinion, they are essential.","Goodbye.","You're welcome."],"In my opinion, they are essential."],["\"Thank you for your help.\"",["My pleasure.","See you tomorrow.","No chance."],"My pleasure."],["\"Modern systems are more efficient.\"",["That's true.","Good night.","Never mind."],"That's true."],["\"Could you repeat the last point?\"",["Of course.","Thank you.","Good luck."],"Of course."],["\"I think software updates are important.\"",["Absolutely.","Goodbye.","No problem."],"Absolutely."],["\"I don't understand the process.\"",["Let me explain.","You're welcome.","See you later."],"Let me explain."]]},
+                {t:"Complete Dialogues & Mixed Comm",type:"text",opts:[],q:[["A: Modern automation systems improve efficiency.\nB: ________________ (Agree)","I agree completely.","Say you agree."],["A: They also reduce human error.\nB: ________________ (True)","That's true.","Acknowledge it is true."],["A: Could you explain how sensors work?\nB: ________________ (Sure)","Certainly.","One word starting with C"],["A: Thank you for the explanation.\nB: ________________ (Welcome)","You're welcome.","Standard reply to thanks"],["A: What do you think about digital control systems?\nB: ________________ (Opinion, effective)","In my opinion, they are very effective.","Start with 'In my opinion'"],["A: Do they improve performance?\nB: ________________ (Yes, significantly)","Yes, they improve performance significantly.","Yes, they improve..."],["\"Thank you for repairing the machine.\"","You're welcome.","Reply to thanks"],["\"Could you repeat the instructions?\"","Of course.","Of..."],["\"What do you think about automation?\"","In my opinion, it is very useful.","Start with 'In my opinion'"],["\"Sensors improve monitoring accuracy.\"","I agree completely.","Agree fully"],["\"I don't understand this process.\"","Let me explain.","Offer to explain"]]}
+            ],
+            "Error Correction Challenge": [
+                {t:"Correct all 30 Sentences",type:"text",opts:[],q:[["The sensors detects temperature changes.","The sensors detect temperature changes.","Remove 's'"],["The equipment are inspected regularly.","The equipment is inspected regularly.","Equipment is uncountable"],["The software update improve system performance.","The software update improves system performance.","Singular needs 's'"],["Modern systems is more efficient than older systems.","Modern systems are more efficient than older systems.","Plural needs 'are'"],["The machine stop because the voltage is unstable.","The machine stops because the voltage is unstable.","Singular needs 's'"],["The cooling system prevent overheating.","The cooling system prevents overheating.","Singular needs 's'"],["The software should updated regularly.","The software should be updated regularly.","Needs 'be'"],["The equipment must inspected daily.","The equipment must be inspected daily.","Needs 'be'"],["The sensors is installed carefully.","The sensors are installed carefully.","Plural needs 'are'"],["The machine are controlled automatically.","The machine is controlled automatically.","Singular needs 'is'"],["Modern sensors are more accurater than old sensors.","Modern sensors are more accurate than old sensors.","Remove 'r'"],["The technician monitor the system continuously.","The technician monitors the system continuously.","Singular needs 's'"],["The software can updated automatically.","The software can be updated automatically.","Needs 'be'"],["The cooling system are activated automatically.","The cooling system is activated automatically.","Singular needs 'is'"],["The operator check the machine every day.","The operator checks the machine every day.","Singular needs 's'"],["The equipment require regular maintenance.","The equipment requires regular maintenance.","Equipment is singular"],["The system fail because the sensor is damaged.","The system fails because the sensor is damaged.","Singular needs 's'"],["The cables is checked regularly.","The cables are checked regularly.","Plural needs 'are'"],["The machine can repaired quickly.","The machine can be repaired quickly.","Needs 'be'"],["The software are installed automatically.","The software is installed automatically.","Software is singular"],["The new system is more easier to use.","The new system is easier to use.","Remove 'more'"],["Engineers monitors equipment carefully.","Engineers monitor equipment carefully.","Plural subject removes 's'"],["The voltage levels is monitored continuously.","The voltage levels are monitored continuously.","Levels is plural"],["The cooling fan stop working suddenly.","The cooling fan stops working suddenly.","Singular needs 's'"],["The equipment should repaired immediately.","The equipment should be repaired immediately.","Needs 'be'"],["Modern systems are reliabler than old systems.","Modern systems are more reliable than old systems.","Use 'more'"],["The software improve efficiency significantly.","The software improves efficiency significantly.","Singular needs 's'"],["Sensors helps engineers detect faults.","Sensors help engineers detect faults.","Plural subject removes 's'"],["The machine is control automatically.","The machine is controlled automatically.","Needs 'ed'"],["The cables must replaced annually.","The cables must be replaced annually.","Needs 'be'"]]}
+            ]
+        };
+
+        const stdMat = {
+            1: {s: "الفصل الأول عن Present Simple Passive لوصف الأنظمة التقنية للتركيز على 'الحدث' بدلاً من الفاعل.",g: "Subject + am/is/are + Past Participle (V3). المفرد يأخذ 'is' والجمع 'are'.",n: "يمكن حذف الفاعل بالكامل بقطع عبارة 'by...' عندما يكون بديهياً.",m: "كتابة التصريف الأول بدلاً من الثالث: 'The device is monitor' ❌ الصواب 'is monitored' ✔️.",r: "Present Passive = Object + is/are + V3. الاتفاق: Absolutely / You're right."},
+            2: {s: "الفصل الثاني عن Modal Passives لصياغة التعليمات بشروط 'must be' و 'should be'.",g: "Subject + Modal (must/should/can/may) + be + Past Participle.",n: "بعد الأفعال الناقصة نضع المصدر 'be' دون تغيير.",m: "إسقاط 'be': 'The system must monitored' ❌ الصواب 'must be monitored' ✔️.",r: "Modal Passive = Modal + be + V3. المغادرة: Take care / Let's keep in touch."},
+            3: {s: "التعبير عن العلاقات السببية (Cause-Effect) بين المشكلات والنتائج بالميكاترونكس.",g: "للتعبير عن السبب: because + جملة كاملة. للتعبير عن النتيجة: so أو therefore.",n: "يمكن دمج المبني للمجهول في العلاقات السببية.",m: "وضع فاصلة قبل because بشكل مبالغ أو نسيان الفاصلة المنقوطة قبل therefore.",r: "Reason = because + clause. Result = , so / ; therefore, ."},
+            4: {s: "صياغة المقارنات الهندسية الفنية (Comparatives) للسرعة، الكفاءة، والأمان.",g: "الصفات القصيرة: Adjective + -er + than. الطويلة: more + Adjective + than.",n: "تأكد من استخدام 'than' للمقارنة وليس 'then'.",m: "الجمع بين صفتين: 'more faster' ❌ والصواب 'faster' ✔️.",r: "Short Adj = -er + than. Long Adj = more + Adj + than."},
+            5: {s: "دمج الهياكل اللغوية (مبني للمجهول، سببية، مقارنة) في فقرة تشغيلية.",g: "[المبني للمجهول] + because + [السبب] + [المقارنة] + and + [المبني للمجهول 2].",n: "مراعاة نبرة التشديد الصوتي لرفض قاطع بكلمة 'NOT'.",m: "عدم توازن الهيكل أو حدوث شظايا جملية غير مكتملة.",r: "Combine logic smoothly. Refusal: Not in a million years."},
+            6: {s: "مراجعة شاملة لتعزيز الدقة اللغوية ومكافحة الأخطاء الشائعة في الأزمنة والصفات.",g: "تطابق الفاعل مع الفعل والصيغة الصحيحة للتصريف الثالث للأفعال الشاذة.",n: "استخدام نبرة صوتية هابطة (Falling Intonation) في التقريرية.",m: "تكرار أخطاء الجمع للمفرد في المبني للمجهول.",r: "Double check structures and phone etiquette."},
+            7: {s: "الترتيب اللغوي والإجرائي للعمليات التركيبية (Sequence Ladder).",g: "استخدام مفردات الترتيب المنهجي: First / Next / Then / Finally.",n: "القدرة على دمج ثلاث أفكار في جملة واحدة متطورة.",m: "استخدام أدوات ربط عشوائية تسبب فقدان الترتيب المنطقي.",r: "First -> Next -> Then -> Finally."},
+            8: {s: "تأطير الجمل وتمييز البسيطة (Simple)، المشتركة (Compound)، والمعقدة (Complex).",g: "بسيطة: فاعل وفعل. مركبة: FANBOYS. معقدة: جملة تابعة ومستقلة.",n: "عدم استخدام الرابطين although و but معاً.",m: "استخدام because و so معاً ❌ الصواب حذف أحدهما ✔️.",r: "Simple=1 Ind. Compound=2 Ind+FANBOYS. Complex=1 Ind+1 Dep."}
+        };
+
+        const crashCourseHTML = `
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Part 1 - Parts of Speech Vocabulary Bank <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><h3 class="cc-head">1. Nouns (الأسماء)</h3><p class="vocab-list">Device, machine, engine, motor, battery, panel, solar panel, solar cell, turbine, generator, converter, inverter, controller, sensor, switch, cable, wire, circuit, board, module, system, network, component, equipment, tool, instrument, meter, display, screen, interface, energy, power, electricity, voltage, current, resistance, charge, capacity, efficiency, output, input, temperature, pressure, speed, frequency, signal, data, control, operation, process, mechanism, structure, framework, support, housing, cover, case, frame, platform, base, pipe, valve, pump, filter, fan, cooler, heater, radiator, compressor, tank, fuel, gas, air, water, steam, wind, sunlight, radiation, heat, force, motion, rotation, movement, direction, flow, level, rate, density, mass, weight, installation, maintenance, inspection, measurement, calculation, analysis, design, testing, operation, repair, technician, engineer, operator, mechanic, developer, designed, researcher, student, user, customer, system failure, power failure, short circuit, overload, damage, fault, problem, error, solution, improvement, material, metal, plastic, glass, rubber, steel, copper, aluminum, carbon, fiber, technology, innovation, development, automation, robotics, electronics, mechanics, engineering, programming, production, factory, plant, station, facility, laboratory, workshop, control room, test center, energy station, charging station, environment, pollution, emission, waste, resource, sustainability, renewable energy, clean energy, efficiency improvement, energy storage, software, hardware, database, network device, monitoring system, control system, safety system, power system, cooling system, communication system, panel mount, wire connection, signal transmission, energy conversion, power supply, energy storage, data transmission, system control, equipment operation, technical support.</p>
+            <h3 class="cc-head mt-4">2. Verbs (الأفعال)</h3><p class="vocab-list">Install, connect, attach, assemble, build, construct, design, develop, create, produce, generate, convert, store, transfer, deliver, supply, distribute, transmit, control, regulate, measure, test, check, monitor, observe, record, analyze, calculate, evaluate, inspect, repair, fix, replace, maintain, clean, adjust, improve, upgrade, update, restore, start, stop, run, operate, activate, deactivate, switch, turn on, turn off, reset, open, close, lock, unlock, connect, disconnect, plug, unplug, mount, install, increase, decrease, reduce, raise, lower, expand, extend, compress, tighten, loosen, heat, cool, charge, discharge, rotate, spin, move, push, pull, lift, control, manage, direct, guide, support, protect, prevent, avoid, solve, detect, identify, recognize, understand, explain, describe, report, present, demonstrate, show, illustrate, design, plan, prepare, organize, arrange, schedule, manage, coordinate, execute, complete, research, study, learn, practice, train, teach, improve, develop, innovate, discover, manufacture, fabricate, assemble, produce, construct, process, package, deliver, install, commission, power, energize, supply, charge, feed, connect, transmit, receive, process, control, monitor, diagnose, troubleshoot, debug, repair, maintain, optimize, upgrade, configure, calibrate, startup, shut down, power up, power down, run, operate, activate, initialize, boot, restart, secure, protect, stabilize, balance, support, reinforce, strengthen, maintain, improve, enhance, test, validate, verify, confirm, approve, accept, reject, review, inspect, audit, communicate, inform, notify, explain, present, report, discuss, recommend, suggest, advise.</p>
+            <h3 class="cc-head mt-4">3. Adjectives (الصفات)</h3><p class="vocab-list">Electric, electrical, electronic, digital, mechanical, automatic, manual, technical, industrial, modern, advanced, smart, intelligent, innovative, efficient, effective, reliable, stable, secure, safe, powerful, strong, durable, robust, flexible, compact, portable, lightweight, heavy, large, small, tiny, massive, thin, thick, wide, narrow, high, low, fast, slow, quick, rapid, steady, constant, variable, dynamic, static, active, passive, renewable, solar, wind, hydraulic, thermal, magnetic, electric, hybrid, clean, green, high-power, low-power, high-voltage, low-voltage, high-speed, low-speed, high-efficiency, low-efficiency, high-quality, low-cost, expensive, cheap, affordable, available, accessible, useful, practical, important, necessary, essential, complex, simple, easy, difficult, challenging, basic, fundamental, primary, secondary, additional, internal, external, central, local, global, regional, remote, wireless, connected, integrated, compatible, adjustable, adaptable, programmable, configurable, scalable, expandable, replaceable, repairable, maintainable, protective, supportive, resistant, heat-resistant, waterproof, dustproof, shockproof, fireproof, corrosion-resistant, weather-resistant, environmental, sustainable, eco-friendly, energy-efficient, low-emission, low-carbon, resource-saving, cost-effective, future-ready, next-generation.</p>
+            <h3 class="cc-head mt-4">4-8. Others</h3><p class="vocab-list"><b>Adverbs:</b> Quickly, slowly, carefully, safely, easily, correctly, efficiently, automatically, manually, normally, usually, often, sometimes, rarely, always, never, frequently, regularly, immediately, gradually, accurately, precisely, effectively, properly, successfully, completely, partially, directly, indirectly, clearly, strongly, highly, significantly, slightly, approximately, nearly, almost, exactly, especially, generally.<br><b>Pronouns:</b> I, you, he, she, it, we, they, me, him, her, us, them, my, your, his, her, its, our, their, mine, yours, his, hers, ours, theirs, this, that, these, those, someone, something, everyone, everything, anyone, anything, no one, nothing.<br><b>Prepositions:</b> In, on, at, by, with, from, to, for, of, about, under, over, above, below, between, among, around, through, across, inside, outside, before, after, during, since, until, within, without, along, toward.<br><b>Conjunctions:</b> And, but, or, nor, so, yet, for, because, although, while, since, unless, if, when, after, before, until.<br><b>Interjections:</b> Oh, wow, ah, oops, hey.</p></div></div>
+            
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Part 2 - Simple Sentence Patterns <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><ul class="vocab-list list-disc pl-5"><li><b>SV:</b> The engine starts.</li><li><b>SVO:</b> The technician checks the battery.</li><li><b>SVC:</b> The system is efficient.</li><li><b>SVIODO:</b> The system sends the operator a signal.</li><li><b>SVOC:</b> The technician makes the system stable.</li><li><b>SVA:</b> The technician works carefully.</li><li><b>SVOA:</b> The technician installs the panel on the roof.</li><li><b>Compounds:</b> The motor and generator operate.</li></ul></div></div>
+
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Part 3 - Phrases <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><ul class="vocab-list list-disc pl-5"><li><b>Prepositional:</b> The battery <i>in the system</i> is new.</li><li><b>Infinitive:</b> The machine is designed <i>to produce energy</i>.</li><li><b>Gerund:</b> <i>Saving energy</i> is important.</li><li><b>Participial:</b> <i>Powered by solar energy</i>, the system runs efficiently.</li><li><b>Appositive:</b> The inverter, <i>a power conversion device</i>, controls electricity flow.</li><li><b>Absolute:</b> The technician finished, <i>his tools lying on the table</i>.</li></ul></div></div>
+
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Part 4 - Clauses <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><ul class="vocab-list list-disc pl-5"><li><b>Noun:</b> I know <i>that the battery is empty</i>.</li><li><b>Adjective:</b> The technician <i>who repairs the motor</i> is skilled.</li><li><b>Adverb:</b> The system stops <i>when the battery is empty</i>.</li></ul></div></div>
+
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Parts 5 & 6 - Compound & Complex Sentences <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><ul class="vocab-list list-disc pl-5"><li><b>Compound (FANBOYS):</b> The turbine generates electricity, <i>and</i> the battery stores the energy.</li><li><b>Compound (;):</b> The engineer tested the system<i>;</i> the results were excellent.</li><li><b>Compound (Adverb):</b> The battery was empty<i>; therefore,</i> the system stopped.</li><li><b>Complex:</b> The system stopped <i>because the battery was empty</i>.</li></ul></div></div>
+
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Parts 7 & 8 - Connectors & Transitions <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><p class="vocab-list"><b>Connectors (Inside sentence):</b> and, but, because, so, if, when.<br><b>Transitions (Between sentences):</b> In addition, First, Therefore, However, Indeed.</p></div></div>
+
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Part 9 - Sentence Building Worksheets (Solved) <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><ul class="vocab-list list-disc pl-5"><li>The technician repairs the motor. (يقوم الفني بإصلاح المحرك.)</li><li>The efficient system produces energy. (النظام الفعال ينتج الطاقة.)</li><li>The technician repairs the machine carefully. (يصلح الفني الآلة بعناية.)</li><li>The technician repairs the motor in the workshop. (جار ومجرور)</li><li>The engineer designs the system to improve efficiency. (مصدرية)</li><li>Saving energy is important. (اسم فاعل)</li><li>The technician repaired the battery, and the system started working. (مركبة)</li><li>The system stopped because the battery was empty. (معقدة)</li><li>First, the technician checks the system. Next, he inspects... (انتقالات)</li></ul></div></div>
+
+            <div class="cc-box"><button class="cc-btn" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">Final Assessments (Solved) <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="cc-content"><p class="vocab-list"><b>Parts of Speech:</b> repairs (Verb), efficiently (Adverb), modern (Adjective), inside (Preposition), technician (Noun).<br><b>Patterns:</b> The motor runs (SV), The system is efficient (SVC), The technician works carefully (SVA).<br><b>Vocabulary:</b> Turbine (produces electricity from motion), Sensor (detects info), Voltage (electric pressure).</p></div></div>
+        `;
+
+        // ================= APPLICATION STATE =================
+        const app = {
+            data: { vcb: rawVcb, uq: rawUq, mq: rawMq, st: stdMat },
+            user: null,
+            timer: null,
+            timeLeft: 0,
+            activeQ: 0,
+            ansData: {},
+            mode: '',
+            adminAuth: false,
+
+            init() {
+                if (localStorage.getItem('dtu_theme') === 'dark' || (!('dtu_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) this.toggleTheme(true);
+                const u = localStorage.getItem('dtu_user');
+                if (u) { this.user = JSON.parse(u); this.navigate('dashboard'); }
+                else this.navigate('login');
+                document.getElementById('crash-course-container').innerHTML = crashCourseHTML;
+            },
+
+            toggleTheme(forceDark = null) {
+                const isDark = forceDark !== null ? forceDark : !document.documentElement.classList.contains('dark');
+                if (isDark) { document.documentElement.classList.add('dark'); localStorage.setItem('dtu_theme', 'dark'); }
+                else { document.documentElement.classList.remove('dark'); localStorage.setItem('dtu_theme', 'light'); }
+            },
+
+            login(e) {
+                e.preventDefault();
+                const name = document.getElementById('loginName').value.trim();
+                if(name) {
+                    this.user = { name, joined: new Date().toLocaleDateString(), v: [], qz: {} };
+                    localStorage.setItem('dtu_user', JSON.stringify(this.user));
+                    this.navigate('dashboard');
+                }
+            },
+            logout() { localStorage.removeItem('dtu_user'); this.user = null; this.navigate('login'); },
+            saveUser() { localStorage.setItem('dtu_user', JSON.stringify(this.user)); },
+
+            navigate(view) {
+                ['login','dashboard','vocab','crashcourse','grammarhub','mechquizzes','unitquizzes','exam','results','funmode','profile','admin'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+                document.getElementById('main-scroll').scrollTop = 0;
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('nav-active'));
+                document.querySelectorAll(`.nav-item[onclick*="'${view === 'exam' || view === 'results' ? 'unitquizzes' : view}'"]`).forEach(e => e.classList.add('nav-active'));
+                
+                if(view === 'dashboard') {
+                    document.getElementById('dash-name').textContent = this.user.name.split(' ')[0];
+                    document.getElementById('stat-vocab').textContent = this.user.v.length;
+                    document.getElementById('stat-mech').textContent = Object.keys(this.user.qz).filter(k=>k.startsWith('m_')).length;
+                    document.getElementById('stat-unit').textContent = Object.keys(this.user.qz).filter(k=>k.startsWith('u_')).length;
+                    let scores = Object.values(this.user.qz), avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+                    document.getElementById('stat-score').textContent = `${avg}%`;
+                }
+                if(view === 'vocab') this.renderVocab();
+                if(view === 'grammarhub') { const s = document.getElementById('grammarSelect'); if(s.children.length===0) { for(let i=1;i<=8;i++) s.innerHTML+=`<option value="${i}">Unit ${i}</option>`; this.renderGrammarTab(1); } }
+                if(view === 'mechquizzes') this.renderQuizzes('mech');
+                if(view === 'unitquizzes') this.renderQuizzes('unit');
+                if(view === 'funmode') this.fun.init();
+                if(view === 'profile') {
+                    document.getElementById('p-name').textContent = this.user.name;
+                    document.getElementById('p-avatar').textContent = this.user.name.charAt(0).toUpperCase();
+                    let b = document.getElementById('badges-grid'); b.innerHTML='';
+                    [{i:'🌱',t:'Beginner',c:true},{i:'🧠',t:'Smart',c:Object.keys(this.user.qz).length>0},{i:'📚',t:'Vocab',c:this.user.v.length>=20},{i:'🏆',t:'Perfect',c:Object.values(this.user.qz).includes(100)}].forEach(x => {
+                        b.innerHTML += `<div class="p-3 text-center border rounded-xl ${x.c?'border-brand-500 bg-brand-50 dark:bg-brand-900/20':'border-slate-200 dark:border-slate-800 opacity-40 grayscale'}"><div class="text-3xl">${x.i}</div><div class="text-[10px] font-bold mt-1">${x.t}</div></div>`;
+                    });
+                }
+                if(view === 'admin' && this.adminAuth) { document.getElementById('admin-login').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); this.admin.load(); }
+            },
+
+            toast(m) { const t=document.getElementById('toast-container'),d=document.createElement('div'); d.className='bg-slate-800 text-white px-4 py-3 rounded-lg shadow-lg text-sm'; d.textContent=m; t.appendChild(d); setTimeout(()=>d.remove(),3000); },
+
+            renderVocab() {
+                const s = document.getElementById('vocabSearch').value.toLowerCase();
+                const g = document.getElementById('vocab-grid'); g.innerHTML = '';
+                this.data.vcb.forEach(l => {
+                    l[1].forEach(w => {
+                        if(s && !w[0].toLowerCase().includes(s) && !w[1].toLowerCase().includes(s)) return;
+                        const lrnd = this.user.v.includes(w[0]);
+                        g.innerHTML += `
+                            <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 card-hover flex flex-col h-full">
+                                <div class="flex justify-between mb-2"><span class="text-[10px] font-bold text-brand-600 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded">${l[0]}</span><button onclick="app.tglVcb('${w[0]}')" class="w-6 h-6 rounded-full flex items-center justify-center ${lrnd?'bg-emerald-100 text-emerald-600':'bg-slate-100 dark:bg-slate-800 text-slate-400'}"><i class="fa-solid fa-check"></i></button></div>
+                                <h3 class="font-bold text-lg border-b border-slate-100 dark:border-slate-800 pb-1 mb-2">${w[0]}</h3>
+                                <p class="text-sm text-slate-600 dark:text-slate-400 mb-2 flex-1">${w[1]}</p>
+                                <div class="mt-auto bg-slate-50 dark:bg-slate-800 -mx-5 px-5 -mb-5 pb-5 pt-3 rounded-b-2xl border-t border-slate-100 dark:border-slate-700">
+                                    <p class="text-right font-arabic font-bold text-brand-600 mb-2" dir="rtl">${w[3]}</p><div class="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-100 dark:border-amber-900/30">Hint: ${w[4]}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            },
+            tglVcb(w) { const i = this.user.v.indexOf(w); if(i===-1) this.user.v.push(w); else this.user.v.splice(i,1); this.saveUser(); this.renderVocab(); },
+
+            renderGrammarTab(u) {
+                if(typeof u !== 'number') u = document.getElementById('grammarSelect').value;
+                const d = this.data.st[u], a = document.getElementById('grammar-content');
+                window._gTab = window._gTab || 'summary';
+                document.querySelectorAll('#grammar-tabs button').forEach(b => b.classList.replace('bg-brand-600','bg-white'));
+                document.querySelectorAll('#grammar-tabs button').forEach(b => b.classList.replace('text-white','text-slate-800'));
+                event && event.target.classList.replace('bg-white','bg-brand-600') && event.target.classList.replace('text-slate-800','text-white');
+                const t = window._gTab === 'summary' ? d.s : window._gTab === 'grammar' ? d.g : window._gTab === 'notes' ? d.n : window._gTab === 'mistakes' ? d.m : d.r;
+                a.innerHTML = `<h3 class="text-xl font-bold mb-4 text-brand-600">Unit ${u}</h3><p class="whitespace-pre-line leading-relaxed text-sm">${t}</p>`;
+            },
+            setGrammarTab(t) { window._gTab = t; this.renderGrammarTab(document.getElementById('grammarSelect').value); },
+
+            renderQuizzes(t) {
+                const c = document.getElementById(t==='mech'?'mech-quiz-list':'unit-quiz-list'); c.innerHTML='';
+                const src = t==='mech' ? Object.keys(this.data.mq) : this.data.uq;
+                src.forEach((q, i) => {
+                    const id = t==='mech' ? `m_${i}` : `u_${i}`;
+                    const title = t==='mech' ? q : q[0];
+                    const count = t==='mech' ? this.data.mq[q].reduce((a,x)=>a+(x.type==='order'?x.q[0][1].length*x.q.length:x.q.length),0) : q[1].length;
+                    const sc = this.user.qz[id];
+                    c.innerHTML += `
+                        <div class="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 card-hover flex justify-between items-center">
+                            <div><h3 class="font-bold">${title}</h3><p class="text-xs text-slate-500">${count} Questions</p></div>
+                            <div class="flex items-center gap-4">
+                                ${sc!==undefined?`<span class="text-xs font-bold text-emerald-500">${sc}%</span>`:''}
+                                <button onclick="app.examEngine.start('${t}', ${i})" class="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-bold">Start</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+
+            examEngine: {
+                type: '', idx: -1, src: null, qlist: [],
+                start(t, i) {
+                    this.type = t; this.idx = i; app.ansData = {}; app.activeQ = 0;
+                    if(t==='unit') { this.src = app.data.uq[i]; this.qlist = this.src[1].map(x=>({t:'mcq',q:x[0],opts:x[1],a:x[2],exp:x[3]})); document.getElementById('exam-title').textContent = this.src[0]; }
+                    else { const sec = Object.keys(app.data.mq)[i]; this.src = app.data.mq[sec]; this.qlist = []; this.src.forEach(pt => { pt.q.forEach(x => { if(pt.type==='order') { x[1].forEach((_,si) => this.qlist.push({t:'order',title:pt.t,q:`${x[0]} (Step ${si+1})`,opts:x[1],a:x[2][si]})); } else this.qlist.push({t:pt.type,title:pt.t,text:pt.text,opts:pt.opts,q:x[0],a:x[1],hint:x[2]}); }); }); document.getElementById('exam-title').textContent = sec; }
+                    document.getElementById('exam-tot').textContent = this.qlist.length;
+                    app.timeLeft = t==='unit' ? 1200 : 600;
+                    document.getElementById('anti-cheat').classList.add('hidden');
+                    this.buildMap(); this.loadQ(); this.timer();
+                    app.navigate('exam');
+                },
+                buildMap() {
+                    const m=document.getElementById('exam-map'); m.innerHTML='';
+                    this.qlist.forEach((_,i)=> m.innerHTML+=`<button id="mb-${i}" onclick="app.examEngine.jump(${i})" class="py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">${i+1}</button>`);
+                },
+                loadQ() {
+                    const q=this.qlist[app.activeQ]; document.getElementById('exam-curr').textContent = app.activeQ+1;
+                    document.querySelectorAll('#exam-map button').forEach((b,i)=> b.className=`py-2 text-xs font-bold rounded-lg border ${app.ansData[i]!==undefined?'border-emerald-500 bg-emerald-50 text-emerald-600':i===app.activeQ?'border-brand-600 bg-brand-50 text-brand-600':'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'}`);
+                    document.getElementById('exam-prog').style.width = `${((app.activeQ)/this.qlist.length)*100}%`;
+                    
+                    let html = `<div class="text-[10px] font-bold text-brand-600 uppercase mb-2">${q.title||'Question'}</div>`;
+                    if(q.text) html += `<div class="p-3 bg-slate-50 dark:bg-slate-800 text-xs mb-4 rounded-xl border-l-2 border-brand-500">${q.text}</div>`;
+                    html += `<h3 class="font-bold mb-4 text-lg en-text">${q.q}</h3>`;
+                    
+                    if(q.t==='mcq') {
+                        html += `<div class="space-y-2">`;
+                        q.opts.forEach((o,i) => html += `<button onclick="app.examEngine.ans(${i})" class="opt-btn w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 en-text text-sm ${app.ansData[app.activeQ]===i?'selected':''}">${o}</button>`);
+                        html += `</div>`;
+                    } else if(q.t==='inline' || q.t==='match' || q.t==='order') {
+                        html += `<select onchange="app.examEngine.ans(this.value)" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border outline-none en-text"><option value="">-- Choose --</option>${q.opts.map(o=>`<option value="${o}" ${app.ansData[app.activeQ]===o?'selected':''}>${o}</option>`).join('')}</select>`;
+                    } else {
+                        html += `<input type="text" onblur="app.examEngine.ans(this.value)" value="${app.ansData[app.activeQ]||''}" placeholder="Type answer..." class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border outline-none en-text">`;
+                        if(q.hint) html += `<p class="text-xs text-amber-600 mt-2"><i class="fa-solid fa-lightbulb"></i> Hint: ${q.hint}</p>`;
+                    }
+                    if(this.type==='unit' && app.ansData[app.activeQ]!==undefined) html += `<div class="mt-4 p-3 text-xs bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 rounded-xl border border-brand-200 dark:border-brand-800"><b>Explanation:</b> ${q.exp}</div>`;
+                    
+                    document.getElementById('exam-question-area').innerHTML = html;
+                    document.getElementById('exam-next-btn').textContent = app.activeQ === this.qlist.length-1 ? 'Submit' : 'Next';
+                },
+                ans(v) { 
+                    app.ansData[app.activeQ] = v; 
+                    if(this.type === 'mech') {
+                        // fuzzy validation immediate
+                        const q = this.qlist[app.activeQ];
+                        if(typeof v === 'string' && v.replace(/[^a-z0-9]/gi,'').toLowerCase() === q.a.replace(/[^a-z0-9]/gi,'').toLowerCase()) app.toast('Correct!');
+                    }
+                    this.loadQ(); 
+                },
+                jump(i) { app.activeQ=i; this.loadQ(); },
+                prev() { if(app.activeQ>0) { app.activeQ--; this.loadQ(); } },
+                next() { if(app.activeQ<this.qlist.length-1) { app.activeQ++; this.loadQ(); } else this.submit(); },
+                timer() {
+                    clearInterval(app.timer);
+                    app.timer = setInterval(()=>{
+                        app.timeLeft--;
+                        document.getElementById('exam-timer').textContent = `${Math.floor(app.timeLeft/60).toString().padStart(2,'0')}:${(app.timeLeft%60).toString().padStart(2,'0')}`;
+                        if(app.timeLeft<=0) this.submit();
+                    },1000);
+                },
+                submit() {
+                    clearInterval(app.timer);
+                    let sc = 0;
+                    this.qlist.forEach((q,i) => {
+                        const u = app.ansData[i];
+                        if(q.t==='mcq') { if(u===q.a) sc++; }
+                        else { if(u && u.replace(/[^a-z0-9]/gi,'').toLowerCase() === q.a.replace(/[^a-z0-9]/gi,'').toLowerCase()) sc++; }
+                    });
+                    const p = Math.round((sc/this.qlist.length)*100);
+                    app.user.qz[`${this.type.charAt(0)}_${this.idx}`] = p; app.saveUser();
+                    
+                    document.getElementById('res-name').textContent = document.getElementById('exam-title').textContent;
+                    document.getElementById('res-score').textContent = `${sc}/${this.qlist.length}`;
+                    document.getElementById('res-perc').textContent = `${p}%`;
+                    const b = document.getElementById('res-badge');
+                    if(p>=80){ b.className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl font-black mb-4 border-4 border-emerald-500 text-emerald-500 bg-emerald-50"; b.innerHTML='<i class="fa-solid fa-trophy"></i>'; }
+                    else { b.className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl font-black mb-4 border-4 border-amber-500 text-amber-500 bg-amber-50"; b.innerHTML='<i class="fa-solid fa-star"></i>'; }
+                    
+                    document.getElementById('c-name').textContent = app.user.name;
+                    document.getElementById('c-quiz').textContent = document.getElementById('res-name').textContent;
+                    document.getElementById('c-score').textContent = `${p}%`;
+
+                    app.navigate('results');
+                }
+            },
+
+            fun: {
+                w: [], idx: 0, s: null, c: null, r: null, g: null,
+                init() {
+                    this.w = app.data.vcb.flatMap(l=>l[1]).sort(()=>0.5-Math.random()); this.idx=0;
+                    document.getElementById('fm-tot').textContent = this.w.length;
+                    if(!this.s) this.setup();
+                    this.update(); setTimeout(()=>this.r.setSize(document.getElementById('canvas-3d').clientWidth, document.getElementById('canvas-3d').clientHeight),100);
+                },
+                setup() {
+                    const box = document.getElementById('canvas-3d');
+                    this.s = new THREE.Scene(); this.c = new THREE.PerspectiveCamera(45, box.clientWidth/box.clientHeight, 0.1, 100); this.c.position.z = 8;
+                    this.r = new THREE.WebGLRenderer({alpha:true,antialias:true}); box.appendChild(this.r.domElement);
+                    this.s.add(new THREE.AmbientLight(0xffffff,0.5)); const dl=new THREE.DirectionalLight(0xffffff,0.8); dl.position.set(5,10,7); this.s.add(dl);
+                    const pg=new THREE.BufferGeometry(),pm=new THREE.PointsMaterial({color:0x6366f1,size:0.05,opacity:0.5,transparent:true}),pos=[];
+                    for(let i=0;i<150;i++) pos.push((Math.random()-0.5)*20,(Math.random()-0.5)*20,(Math.random()-0.5)*20-5);
+                    pg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); this.pts=new THREE.Points(pg,pm); this.s.add(this.pts);
+                    const anim = ()=>{ requestAnimationFrame(anim); if(document.getElementById('view-funmode').classList.contains('hidden'))return; const t=performance.now()*0.001; this.pts.rotation.y=t*0.05; if(this.g) { this.g.rotation.x=Math.sin(t)*0.2; this.g.rotation.y=t*0.5; } this.r.render(this.s,this.c); }; anim();
+                },
+                update() {
+                    const x = this.w[this.idx]; document.getElementById('fm-curr').textContent=this.idx+1;
+                    document.getElementById('fm-cat').textContent=app.data.vcb.find(l=>l[1].includes(x))[0];
+                    document.getElementById('fm-word').textContent=x[0]; document.getElementById('fm-def').textContent=x[1]; document.getElementById('fm-ar').textContent=x[3];
+                    if(this.g) this.s.remove(this.g); this.g=new THREE.Group();
+                    const m=new THREE.MeshStandardMaterial({color:0x6366f1,roughness:0.2,metalness:0.8}); const wm=new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:0.2});
+                    const geo=new THREE.IcosahedronGeometry(1.5,1); const ms=new THREE.Mesh(geo,m), ws=new THREE.Mesh(geo,wm); ws.scale.setScalar(1.02);
+                    this.g.add(ms,ws); this.s.add(this.g);
+                },
+                prev(){ this.idx=(this.idx-1+this.w.length)%this.w.length; this.update(); },
+                next(){ this.idx=(this.idx+1)%this.w.length; this.update(); }
+            },
+
+            admin: {
+                login() { if(document.getElementById('admin-pwd').value==='******') { app.adminAuth=true; app.navigate('admin'); } else app.toast('Wrong password'); },
+                load() {
+                    const tb=document.getElementById('admin-table'); tb.innerHTML='';
+                    let d = JSON.parse(localStorage.getItem('dtu_user')); // Normally fetch all users, simulating with local
+                    if(d) tb.innerHTML=`<tr class="border-b"><td class="p-4">${d.name}</td><td class="p-4">${d.joined}</td><td class="p-4">${Object.keys(d.qz).length}</td><td class="p-4">${d.v.length}</td></tr>`;
+                },
+                export() { app.toast('Exported to CSV'); }
+            },
+
+            showCertificate() { document.getElementById('cert-modal').classList.replace('hidden','flex'); }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => { app.init(); });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && document.getElementById('view-exam').classList.contains('hidden')===false) { document.getElementById('anti-cheat').classList.remove('hidden'); } });
+    </script>
+</body>
+</html>
